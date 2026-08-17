@@ -100,6 +100,16 @@
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
   .modal { background: #fff; border-radius: 12px; padding: 20px; width: 100%; max-width: 400px; max-height: 85vh; overflow-y: auto; }
   
+  /* Store Code Gate */
+  .gate-overlay { position: fixed; inset: 0; background: #182233; display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 200; }
+  .gate-box { background: #fff; border-radius: 14px; padding: 28px 24px; width: 100%; max-width: 380px; }
+  .gate-box h2 { font-size: 17px; margin-bottom: 6px; }
+  .gate-box p { font-size: 13px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  .sync-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #f59e0b; flex-shrink: 0; }
+  .sync-dot.ok { background: #10b981; }
+  .sync-dot.err { background: #ef4444; }
+
   /* Print Rules */
   @media print {
     body * { visibility: hidden; }
@@ -111,13 +121,26 @@
 </head>
 <body>
 
+<!-- STORE CODE GATE -->
+<div id="gate-overlay" class="gate-overlay">
+  <div class="gate-box">
+    <h2>Connect your store</h2>
+    <p>Enter a Store Code to sync data across your devices. Use the same code on your phone and tablet — anyone with this code can view and edit your data, so keep it private.</p>
+    <label style="font-size:11px; color:#64748b;">Store Code</label>
+    <input type="text" id="gate-code-input" class="input" placeholder="e.g. TANAHUN2026" style="text-transform:uppercase;" />
+    <div class="error-text" id="gate-error"></div>
+    <button class="btn" style="width:100%;" onclick="connectStore(document.getElementById('gate-code-input').value)">Connect</button>
+    <div style="font-size:11px; color:#94a3b8; margin-top:10px; text-align:center;">First time? Just make up a code and use it on every device.</div>
+  </div>
+</div>
+
 <div class="app-container">
   <aside>
-    <div class="brand">
+    <div class="brand" onclick="promptChangeStoreCode()" style="cursor:pointer;" title="Tap to change store code">
       <div class="brand-icon">T</div>
       <div>
         <div class="brand-title">Tanahun Shrestha Suppliers and Kirana Stores ledger</div>
-        <div class="brand-sub">All changes saved</div>
+        <div class="brand-sub sync-pill"><span class="sync-dot" id="sync-dot"></span><span id="sync-status">Connecting…</span></div>
       </div>
     </div>
     <nav>
@@ -354,7 +377,27 @@
   </div>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAe5kxJlxbfmAPLjHncuE7dpUnAJCK2J6U",
+  authDomain: "tanahun-shrestha-suppliers.firebaseapp.com",
+  projectId: "tanahun-shrestha-suppliers",
+  storageBucket: "tanahun-shrestha-suppliers.firebasestorage.app",
+  messagingSenderId: "456278049566",
+  appId: "1:456278049566:web:4e9952a2588ecfe0cfbf0f",
+  measurementId: "G-946H5CVDM3"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+let storeCode = null;
+let unsubscribeStore = null;
+let saveDebounce = null;
+
 let inventory = [];
 let invoices = [];
 let stockLogs = [];
@@ -388,20 +431,82 @@ function escapeHtml(str) {
   }[ch]));
 }
 
-function initData() {
-  try {
-    inventory = JSON.parse(localStorage.getItem('inventory-items')) || [];
-    invoices = JSON.parse(localStorage.getItem('sales-invoices')) || [];
-    stockLogs = JSON.parse(localStorage.getItem('stock-logs')) || [];
-  } catch(e) { inventory = []; invoices = []; stockLogs = []; }
-  render();
+function setSyncStatus(text, state) {
+  const dot = document.getElementById('sync-dot');
+  const label = document.getElementById('sync-status');
+  if(label) label.innerText = text;
+  if(dot) dot.className = 'sync-dot' + (state ? ' ' + state : '');
 }
 
+function normalizeCode(raw) {
+  return String(raw || '').trim().toUpperCase().replace(/\s+/g, '-').slice(0, 40);
+}
+
+// Called on load if a store code is already saved on this device
+function initData() {
+  const saved = localStorage.getItem('store-code');
+  if(saved) {
+    document.getElementById('gate-code-input').value = saved;
+    connectStore(saved);
+  } else {
+    setSyncStatus('Not connected', 'err');
+  }
+}
+
+// Called from the gate screen (or the "change store code" prompt)
+function connectStore(rawCode) {
+  const code = normalizeCode(rawCode);
+  const errEl = document.getElementById('gate-error');
+  if(!code) {
+    if(errEl) { errEl.innerText = 'Enter a store code to continue.'; errEl.style.display = 'block'; }
+    return;
+  }
+  if(errEl) errEl.style.display = 'none';
+
+  if(unsubscribeStore) { unsubscribeStore(); unsubscribeStore = null; }
+
+  storeCode = code;
+  localStorage.setItem('store-code', code);
+  setSyncStatus('Connecting…');
+
+  const ref = doc(db, 'stores', code);
+  unsubscribeStore = onSnapshot(ref, snap => {
+    if(snap.exists()) {
+      const data = snap.data();
+      inventory = data.inventory || [];
+      invoices = data.invoices || [];
+      stockLogs = data.stockLogs || [];
+    } else {
+      inventory = []; invoices = []; stockLogs = [];
+      setDoc(ref, { inventory, invoices, stockLogs }).catch(() => {});
+    }
+    document.getElementById('gate-overlay').style.display = 'none';
+    setSyncStatus('Synced · ' + code, 'ok');
+    render();
+  }, err => {
+    console.error(err);
+    setSyncStatus('Connection error', 'err');
+  });
+}
+
+function promptChangeStoreCode() {
+  document.getElementById('gate-code-input').value = storeCode || '';
+  document.getElementById('gate-overlay').style.display = 'flex';
+}
+
+// Writes the current in-memory state to Firestore (debounced so rapid
+// successive changes don't fire a write per keystroke/click)
 function saveData() {
-  localStorage.setItem('inventory-items', JSON.stringify(inventory));
-  localStorage.setItem('sales-invoices', JSON.stringify(invoices));
-  localStorage.setItem('stock-logs', JSON.stringify(stockLogs));
   render();
+  if(!storeCode) return;
+  setSyncStatus('Saving…');
+  clearTimeout(saveDebounce);
+  saveDebounce = setTimeout(() => {
+    const ref = doc(db, 'stores', storeCode);
+    setDoc(ref, { inventory, invoices, stockLogs })
+      .then(() => setSyncStatus('Synced · ' + storeCode, 'ok'))
+      .catch(err => { console.error(err); setSyncStatus('Save failed — check connection', 'err'); });
+  }, 300);
 }
 
 function setTab(tab) {
@@ -981,6 +1086,17 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   });
 }
+
+// Expose functions referenced by inline onclick/oninput attributes in the HTML —
+// ES module top-level declarations aren't added to window automatically.
+Object.assign(window, {
+  connectStore, promptChangeStoreCode,
+  setTab, openModal, closeModal, openProfitModal,
+  openProductModal, saveProductModal, editProduct, deleteProduct,
+  renderInventory, renderSaleProducts,
+  addToCart, updateCartQty, setCartQtyDirect, toggleCustDetails, completeSale,
+  toggleSelectInvoice, toggleSelectAllInvoices, clearSelectedInvoices, showReceiptDetails
+});
 
 initData();
 </script>

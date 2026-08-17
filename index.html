@@ -1,451 +1,946 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Tanahun Shrestha Suppliers and Kirana Stores - StockLedger</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>StockLedger — Inventory & Billing</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#182233" />
+<link rel="icon" href="icon-192.png" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { background: #F5F6F8; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; touch-action: pan-y; }
+  .app-container { display: flex; flex-direction: column; min-height: 100vh; }
+  @media(min-width: 768px) { .app-container { flex-direction: row; } }
+  
+  /* Navigation */
+  aside { background: #182233; color: #e2e8f0; width: 100%; display: flex; flex-direction: column; flex-shrink: 0; z-index: 10; }
+  @media(min-width: 768px) { aside { width: 240px; min-height: 100vh; } }
+  .brand { padding: 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .brand-icon { width: 32px; height: 32px; background: #10b981; color: #0f172a; font-weight: bold; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .brand-title { font-weight: 600; color: #fff; font-size: 15px; }
+  .brand-sub { font-size: 11px; color: #94a3b8; }
+  nav { display: flex; flex-direction: row; justify-content: space-around; padding: 4px; overflow-x: auto; }
+  @media(min-width: 768px) { nav { flex-direction: column; justify-content: flex-start; padding: 12px; gap: 4px; overflow-x: visible; } }
+  .nav-btn { background: transparent; border: none; color: #cbd5e1; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; flex: 1; justify-content: center; position: relative; white-space: nowrap; }
+  @media(min-width: 768px) { .nav-btn { justify-content: flex-start; flex: none; } }
+  .nav-btn.active { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+  .badge { background: #f59e0b; color: #0f172a; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; }
 
-  <style>
-    /* ==========================================================================
-       1. SCREEN RATIO & SLIDE SYSTEM RESET
-       ========================================================================== */
-    :root {
-      --primary: #2563eb;
-      --bg-main: #f8fafc;
-      --bg-surface: #ffffff;
-      --bg-sidebar: #0f172a;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --border-color: #e2e8f0;
-      --sidebar-width: 250px;
-      --header-height: 56px;
-    }
+  /* Main Layout & Page Transitions */
+  main { flex: 1; padding: 16px; max-width: 1100px; margin: 0 auto; width: 100%; position: relative; overflow-x: hidden; }
+  @media(min-width: 768px) { main { padding: 32px; } }
+  .page-title { font-size: 20px; font-weight: 600; margin-bottom: 2px; }
+  .page-sub { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+  
+  .tab-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateX(30px);
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
+                opacity 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+                visibility 0.3s ease;
+  }
 
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+  .tab-view.active-view {
+    position: relative;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(0);
+  }
 
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden; /* Lock root page scroll to enforce slide layout ratio */
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg-main);
-      color: var(--text-main);
-    }
+  .tab-view.slide-left { transform: translateX(-30px); }
+  .tab-view.slide-right { transform: translateX(30px); }
 
-    /* ==========================================================================
-       2. APP LAYOUT & MOBILE HEADER
-       ========================================================================== */
-    .app-viewport {
-      display: flex;
-      width: 100vw;
-      height: 100vh;
-      position: relative;
-      overflow: hidden;
-    }
+  /* UI Cards & Elements */
+  .grid-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+  @media(min-width: 1024px) { .grid-stats { grid-template-columns: repeat(4, 1fr); } }
+  .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; cursor: pointer; transition: border-color 0.2s; }
+  .stat-card:hover { border-color: #34d399; }
+  .stat-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; font-size: 14px; margin-bottom: 12px; }
+  .stat-val { font-size: 18px; font-weight: 600; margin-bottom: 2px; }
+  .stat-lbl { font-size: 12px; color: #64748b; }
+  .alert-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 14px; margin-bottom: 20px; color: #b45309; font-size: 13px; }
+  
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .btn { background: #10b981; color: #fff; border: none; padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-outline { background: transparent; border: 1px solid #cbd5e1; color: #475569; }
+  .input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; outline: none; margin-bottom: 10px; }
+  .input:focus { border-color: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
+  
+  /* Cart Quantity Direct Input */
+  .cart-qty-input {
+    width: 44px;
+    padding: 2px 4px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    outline: none;
+    margin: 0;
+  }
+  .cart-qty-input:focus { border-color: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
 
-    .mobile-header {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: var(--header-height);
-      background: var(--bg-sidebar);
-      color: #ffffff;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 1rem;
-      z-index: 100;
-    }
-
-    .menu-btn {
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 1.5rem;
-      cursor: pointer;
-    }
-
-    /* Sidebar Navigation */
-    aside.sidebar {
-      width: var(--sidebar-width);
-      height: 100%;
-      background-color: var(--bg-sidebar);
-      color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-      z-index: 90;
-      transition: transform 0.3s ease;
-    }
-
-    .brand {
-      padding: 1.25rem 1rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .brand-icon {
-      width: 32px;
-      height: 32px;
-      background: var(--primary);
-      border-radius: 6px;
-      display: grid;
-      place-items: center;
-      font-weight: bold;
-    }
-
-    nav.slide-nav {
-      display: flex;
-      flex-direction: column;
-      padding: 1rem 0;
-    }
-
-    .slide-link {
-      padding: 0.75rem 1.25rem;
-      color: #94a3b8;
-      text-decoration: none;
-      font-size: 0.9rem;
-      border-left: 3px solid transparent;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .slide-link.active, .slide-link:hover {
-      color: #ffffff;
-      background: rgba(255,255,255,0.05);
-      border-left-color: var(--primary);
-    }
-
-    /* ==========================================================================
-       3. SLIDE VIEWPORT & HORIZONTAL SLIDER ENGINE
-       ========================================================================== */
-    .slide-viewport {
-      flex: 1;
-      height: 100%;
-      width: calc(100vw - var(--sidebar-width));
-      overflow: hidden;
-      position: relative;
-    }
-
-    /* Horizontal Track for Slides */
-    .slide-track {
-      display: flex;
-      width: 100%;
-      height: 100%;
-      transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-    }
-
-    /* Individual Slide View */
-    .slide-view {
-      flex: 0 0 100%;
-      width: 100%;
-      height: 100%;
-      overflow-y: auto; /* Internal slide scroll only */
-      padding: 1.5rem;
-      box-sizing: border-box;
-    }
-
-    /* ==========================================================================
-       4. CONTENT CARDS, GRIDS & TABLES
-       ========================================================================== */
-    .page-title {
-      font-size: 1.4rem;
-      font-weight: 700;
-      margin-bottom: 0.25rem;
-    }
-
-    .page-desc {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-bottom: 1.25rem;
-    }
-
-    .grid-4 {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 1rem;
-    }
-
-    .stat-val {
-      font-size: 1.25rem;
-      font-weight: 700;
-    }
-
-    .stat-lbl {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
-    /* Responsive Table Container (scrolls within slide) */
-    .table-container {
-      width: 100%;
-      overflow-x: auto;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      background: var(--bg-surface);
-      margin-top: 1rem;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.875rem;
-      white-space: nowrap;
-    }
-
-    th, td {
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid var(--border-color);
-      text-align: left;
-    }
-
-    th {
-      background: #f1f5f9;
-      color: var(--text-muted);
-    }
-
-    .overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 80;
-    }
-
-    /* ==========================================================================
-       5. MOBILE BREAKPOINTS
-       ========================================================================== */
-    @media (max-width: 768px) {
-      .mobile-header { display: flex; }
-
-      aside.sidebar {
-        position: fixed;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        transform: translateX(-100%);
-      }
-
-      aside.sidebar.active { transform: translateX(0); }
-      .overlay.active { display: block; }
-
-      .slide-viewport {
-        width: 100vw;
-        padding-top: var(--header-height);
-      }
-
-      .slide-view {
-        padding: 1rem;
-      }
-    }
-  </style>
+  /* Tables & Lists */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #f8fafc; text-align: left; padding: 10px 12px; font-weight: 500; color: #64748b; text-transform: uppercase; font-size: 11px; border-bottom: 1px solid #e2e8f0; }
+  td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
+  .text-right { text-align: right; }
+  .text-center { text-align: center; }
+  .flex-between { display: flex; justify-content: space-between; align-items: center; }
+  
+  /* Modal Overlay */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
+  .modal { background: #fff; border-radius: 12px; padding: 20px; width: 100%; max-width: 400px; max-height: 85vh; overflow-y: auto; }
+  
+  /* Print Rules */
+  @media print {
+    body * { visibility: hidden; }
+    #printable-invoice, #printable-invoice * { visibility: visible; }
+    #printable-invoice { position: absolute; left: 0; top: 0; width: 100%; padding: 24px; border: none; box-shadow: none; }
+    .no-print { display: none !important; }
+  }
+</style>
 </head>
 <body>
 
-  <div class="app-viewport">
-
-    <header class="mobile-header">
-      <div style="display:flex; align-items:center; gap:0.5rem;">
-        <button class="menu-btn" id="menuBtn">☰</button>
-        <span style="font-weight:bold;">StockLedger</span>
+<div class="app-container">
+  <aside>
+    <div class="brand">
+      <div class="brand-icon">S</div>
+      <div>
+        <div class="brand-title">StockLedger</div>
+        <div class="brand-sub">All changes saved</div>
       </div>
-      <span style="font-size:0.75rem; color:#94a3b8;">TSS&KS</span>
-    </header>
+    </div>
+    <nav>
+      <button class="nav-btn active" id="nav-dashboard" onclick="setTab('dashboard')">Dashboard</button>
+      <button class="nav-btn" id="nav-inventory" onclick="setTab('inventory')">Inventory <span class="badge" id="low-count-badge" style="display:none;">0</span></button>
+      <button class="nav-btn" id="nav-stock-history" onclick="setTab('stock-history')">Stock Added History</button>
+      <button class="nav-btn" id="nav-sale" onclick="setTab('sale')">New Sale</button>
+      <button class="nav-btn" id="nav-history" onclick="setTab('history')">Sales History</button>
+    </nav>
+  </aside>
 
-    <div class="overlay" id="overlay"></div>
-
-    <aside class="sidebar" id="sidebar">
-      <div class="brand">
-        <div class="brand-icon">S</div>
-        <div>
-          <div style="font-weight:bold; font-size:0.95rem;">StockLedger</div>
-          <div style="font-size:0.7rem; color:#94a3b8;">All changes saved</div>
+  <main>
+    <!-- DASHBOARD VIEW -->
+    <div id="view-dashboard" class="tab-view active-view">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Your inventory and sales metrics at a glance.</div>
+      
+      <div class="grid-stats">
+        <div class="stat-card" onclick="openModal('modal-products')">
+          <div class="stat-icon" style="background:#334155;">P</div>
+          <div class="stat-val" id="stat-prod-count">0</div>
+          <div class="stat-lbl">Products</div>
+        </div>
+        <div class="stat-card" onclick="openModal('modal-stock')">
+          <div class="stat-icon" style="background:#0284c7;">U</div>
+          <div class="stat-val" id="stat-unit-count">0</div>
+          <div class="stat-lbl">Units in stock</div>
+        </div>
+        <div class="stat-card" onclick="openModal('modal-valuation')">
+          <div class="stat-icon" style="background:#4f46e5;">V</div>
+          <div class="stat-val" id="stat-stock-val">₹0.00</div>
+          <div class="stat-lbl">Stock value</div>
+        </div>
+        <div class="stat-card" onclick="openModal('modal-today-sales')">
+          <div class="stat-icon" style="background:#059669;">S</div>
+          <div class="stat-val" id="stat-today-sales">₹0.00</div>
+          <div class="stat-lbl">Today's sales</div>
         </div>
       </div>
-      <nav class="slide-nav">
-        <a class="slide-link active" onclick="goToSlide(0)">Dashboard</a>
-        <a class="slide-link" onclick="goToSlide(1)">Inventory Tracker</a>
-        <a class="slide-link" onclick="goToSlide(2)">Restock History</a>
-        <a class="slide-link" onclick="goToSlide(3)">New Sale (POS)</a>
-        <a class="slide-link" onclick="goToSlide(4)">Sales History & Audit</a>
-      </nav>
-    </aside>
 
-    <div class="slide-viewport">
-      <div class="slide-track" id="slideTrack">
-
-        <!-- SLIDE 1: DASHBOARD -->
-        <div class="slide-view">
-          <div class="page-title">Dashboard</div>
-          <div class="page-desc">Your inventory and sales metrics at a glance.</div>
-
-          <div class="grid-4">
-            <div class="card"><div class="stat-val">0</div><div class="stat-lbl">Products</div></div>
-            <div class="card"><div class="stat-val">0</div><div class="stat-lbl">Units in stock</div></div>
-            <div class="card"><div class="stat-val">₹0.00</div><div class="stat-lbl">Stock value</div></div>
-            <div class="card"><div class="stat-val">₹0.00</div><div class="stat-lbl">Today's sales</div></div>
-          </div>
-
-          <div class="grid-2">
-            <div class="card"><div class="stat-val">₹0.00</div><div class="stat-lbl">Today's net profit</div></div>
-            <div class="card"><div class="stat-val">₹0.00</div><div class="stat-lbl">All-time net profit</div></div>
-          </div>
-
-          <div class="card" style="background:#fffbe0; border-color:#fde68a; color:#b45309;">
-            <strong>⚠️ Low stock warning</strong>
-            <div style="font-size:0.8rem; margin-top:0.25rem;">No items currently low on stock.</div>
-          </div>
+      <div class="grid-stats" style="grid-template-columns: repeat(2, 1fr);">
+        <div class="stat-card" onclick="openProfitModal('today')">
+          <div class="stat-icon" style="background:#059669;">N</div>
+          <div class="stat-val" id="stat-today-profit">₹0.00</div>
+          <div class="stat-lbl">Today's net profit</div>
         </div>
-
-        <!-- SLIDE 2: INVENTORY -->
-        <div class="slide-view">
-          <div class="page-title">Inventory</div>
-          <div class="page-desc">0 products tracked</div>
-
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr><th>Product</th><th>SKU</th><th>Price</th><th>Stock</th><th>Actions</th></tr>
-              </thead>
-              <tbody>
-                <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No products tracked yet.</td></tr>
-              </tbody>
-            </table>
-          </div>
+        <div class="stat-card" onclick="openProfitModal('all')">
+          <div class="stat-icon" style="background:#0d9488;">A</div>
+          <div class="stat-val" id="stat-all-profit">₹0.00</div>
+          <div class="stat-lbl">All-time net profit</div>
         </div>
+      </div>
 
-        <!-- SLIDE 3: RESTOCK HISTORY -->
-        <div class="slide-view">
-          <div class="page-title">Inventory Added History</div>
-          <div class="page-desc">Audit trail for all restocks and newly created products.</div>
+      <div id="low-stock-alert" class="alert-box" style="display:none;">
+        <strong>⚠️ Low stock warning</strong>
+        <div id="low-stock-items-list" style="margin-top:6px; font-size:12px;"></div>
+        <button onclick="setTab('inventory')" style="background:none; border:none; color:#b45309; text-decoration:underline; font-size:12px; cursor:pointer; margin-top:6px;">Go restock →</button>
+      </div>
 
-          <div class="grid-4">
-            <div class="card"><div class="stat-val">0</div><div class="stat-lbl">Restock Entries</div></div>
-            <div class="card"><div class="stat-val">0</div><div class="stat-lbl">Units Added</div></div>
-            <div class="card"><div class="stat-val">₹0.00</div><div class="stat-lbl">Added Cost Value</div></div>
-          </div>
-
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr><th>Date & Time</th><th>Product</th><th>Quantity</th><th>Unit Cost</th><th>Total</th></tr>
-              </thead>
-              <tbody>
-                <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No restock entries found.</td></tr>
-              </tbody>
-            </table>
-          </div>
+      <div class="card">
+        <div class="flex-between" style="margin-bottom:12px;">
+          <h3 style="font-size:14px; font-weight:600;">Recent sales</h3>
+          <button onclick="setTab('history')" style="background:none; border:none; color:#10b981; font-weight:600; font-size:12px; cursor:pointer;">View all →</button>
         </div>
-
-        <!-- SLIDE 4: NEW SALE -->
-        <div class="slide-view">
-          <div class="page-title">New Sale</div>
-          <div class="page-desc">Select products to add to cart and issue bills.</div>
-
-          <div class="grid-2">
-            <div class="card" style="text-align:center; padding: 2rem 1rem; color: var(--text-muted);">
-              No products available to sell.
-            </div>
-            <div class="card">
-              <h3>Cart</h3>
-              <div style="padding: 2rem 0; text-align:center; color: var(--text-muted); border-bottom: 1px solid var(--border-color); margin-bottom: 1rem;">
-                Cart is empty
-              </div>
-              <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:1rem;">
-                <span>Total</span>
-                <span>₹0.00</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- SLIDE 5: SALES AUDIT -->
-        <div class="slide-view">
-          <div class="page-title">Sales History & Audit</div>
-          <div class="page-desc">Select multiple invoices to calculate dynamic totals.</div>
-
-          <div class="grid-4">
-            <div class="card"><div class="stat-val">0</div><div class="stat-lbl">Invoices</div></div>
-            <div class="card"><div class="stat-val">0</div><div class="stat-lbl">Units Sold</div></div>
-            <div class="card"><div class="stat-val">₹0.00</div><div class="stat-lbl">Revenue</div></div>
-          </div>
-
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr><th>Invoice #</th><th>Date</th><th>Items</th><th>Revenue</th><th>Profit</th></tr>
-              </thead>
-              <tbody>
-                <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No sales invoices recorded.</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
+        <div id="recent-sales-list"></div>
       </div>
     </div>
 
+    <!-- INVENTORY VIEW -->
+    <div id="view-inventory" class="tab-view">
+      <div class="flex-between" style="margin-bottom:12px;">
+        <div>
+          <div class="page-title">Inventory</div>
+          <div class="page-sub" id="inv-count-sub">0 products tracked</div>
+        </div>
+        <button class="btn" onclick="openProductModal()">+ Add product</button>
+      </div>
+      <input type="text" id="inv-search" class="input" placeholder="Search by name or SKU" oninput="renderInventory()" style="max-width:320px;" />
+      <div class="card" style="padding:0; overflow:hidden;">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>SKU</th>
+              <th class="text-right">Price</th>
+              <th class="text-center">Stock</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="inventory-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- STOCK HISTORY VIEW -->
+    <div id="view-stock-history" class="tab-view">
+      <div class="page-title">Inventory Added History</div>
+      <div class="page-sub">Audit trail for all restocks and newly created products.</div>
+      <div class="grid-stats" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="stat-card">
+          <div class="stat-lbl">Restock Entries</div>
+          <div class="stat-val" id="stock-hist-count">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Units Added</div>
+          <div class="stat-val" id="stock-hist-units">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Added Cost Value</div>
+          <div class="stat-val" id="stock-hist-cost">₹0.00</div>
+        </div>
+      </div>
+      <div class="card" style="padding:0;" id="stock-history-container"></div>
+    </div>
+
+    <!-- NEW SALE VIEW -->
+    <div id="view-sale" class="tab-view">
+      <div class="page-title">New Sale</div>
+      <div class="page-sub">Select products to add to cart and issue bills.</div>
+      <div style="display:grid; grid-template-columns: 1fr; gap:16px;">
+        <div>
+          <input type="text" id="sale-search" class="input" placeholder="Search products..." oninput="renderSaleProducts()" />
+          <div id="sale-products-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:10px;"></div>
+        </div>
+        <div>
+          <div class="card" style="position:sticky; top:16px;">
+            <h3 style="font-size:14px; margin-bottom:10px;">Cart</h3>
+            <input type="text" id="cust-name" class="input" placeholder="Customer name (optional)" />
+            <button id="btn-more-cust" onclick="toggleCustDetails()" style="background:none; border:none; color:#10b981; font-size:12px; font-weight:600; cursor:pointer; margin-bottom:10px;">+ Add address, contact, PAN</button>
+            <div id="cust-extra-fields" style="display:none;">
+              <input type="text" id="cust-addr" class="input" placeholder="Address (optional)" />
+              <input type="text" id="cust-phone" class="input" placeholder="Contact number (optional)" />
+              <input type="text" id="cust-pan" class="input" placeholder="PAN number (optional)" />
+            </div>
+            <div id="cart-items-container" style="margin:12px 0;"></div>
+            <div class="flex-between" style="font-weight:600; font-size:15px; border-top:1px solid #e2e8f0; padding-top:10px; margin-bottom:12px;">
+              <span>Total</span>
+              <span id="cart-total-val">₹0.00</span>
+            </div>
+            <button class="btn" style="width:100%;" id="btn-complete-sale" onclick="completeSale()" disabled>Complete sale & generate invoice</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECEIPT VIEW -->
+    <div id="view-receipt" class="tab-view" style="max-width:440px; margin:0 auto;">
+      <div class="card" id="printable-invoice">
+        <div style="text-align:center; border-bottom:1px solid #f1f5f9; padding-bottom:12px; margin-bottom:12px;">
+          <div style="font-weight:bold; font-size:15px;">Tanahun Shrestha Suppliers and Kirana Stores</div>
+          <div style="font-size:11px; color:#64748b; margin-top:2px;">PAN No. 624523318</div>
+        </div>
+        <div class="flex-between" style="margin-bottom:12px;">
+          <div>
+            <div style="font-size:16px; font-weight:600;" id="rec-inv-no">INV-0001</div>
+            <div style="font-size:11px; color:#64748b;" id="rec-date-time"></div>
+          </div>
+        </div>
+        <div style="font-size:13px; color:#475569; margin-bottom:12px;" id="rec-cust-details"></div>
+        <div id="rec-items-list" style="border-top:1px solid #f1f5f9; border-bottom:1px solid #f1f5f9; padding:8px 0; margin-bottom:12px;"></div>
+        <div class="flex-between" style="font-weight:600; font-size:15px; margin-bottom:16px;">
+          <span>Total</span>
+          <span id="rec-total">₹0.00</span>
+        </div>
+        <div style="text-align:center; font-size:11px; color:#94a3b8; border-top:1px solid #f1f5f9; padding-top:8px;">Bill by TSS&KS</div>
+      </div>
+      <div style="display:flex; gap:8px;" class="no-print">
+        <button class="btn btn-outline" style="flex:1;" onclick="window.print()">Print</button>
+        <button class="btn" style="flex:1;" onclick="setTab('sale')">New sale</button>
+      </div>
+      <button onclick="setTab('history')" class="no-print" style="width:100%; background:none; border:none; color:#94a3b8; font-size:12px; margin-top:10px; cursor:pointer;">View sales history →</button>
+    </div>
+
+    <!-- SALES HISTORY VIEW -->
+    <div id="view-history" class="tab-view">
+      <div class="page-title">Sales History & Audit</div>
+      <div class="page-sub">Select multiple invoices to calculate dynamic totals.</div>
+      
+      <div class="grid-stats" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="stat-card">
+          <div class="stat-lbl">Invoices</div>
+          <div class="stat-val" id="hist-count">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Units sold</div>
+          <div class="stat-val" id="hist-units">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Revenue</div>
+          <div class="stat-val" id="hist-revenue">₹0.00</div>
+        </div>
+      </div>
+
+      <!-- SELECTED SALES SUMMATION BANNER -->
+      <div class="card" id="selected-summary-card" style="background:#f0fdf4; border-color:#bbf7d0; display:none; margin-bottom:16px;">
+        <div class="flex-between" style="margin-bottom:8px;">
+          <span style="font-size:13px; font-weight:600; color:#166534;">Selected Invoices Summary (<span id="sel-count">0</span>)</span>
+          <button onclick="clearSelectedInvoices()" style="background:none; border:none; color:#15803d; font-size:12px; font-weight:600; cursor:pointer;">Clear selection</button>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:13px; color:#14532d;">
+          <div><strong>Units:</strong> <span id="sel-units">0</span></div>
+          <div><strong>Revenue:</strong> <span id="sel-revenue">₹0.00</span></div>
+          <div><strong>Net Profit:</strong> <span id="sel-profit">₹0.00</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div class="flex-between" style="padding:10px 12px; background:#f8fafc; border-bottom:1px solid #e2e8f0;">
+          <label style="font-size:12px; font-weight:600; color:#64748b; display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="checkbox" id="select-all-invoices" onchange="toggleSelectAllInvoices(this.checked)" style="width:16px; height:16px; cursor:pointer;" /> Select All Invoices
+          </label>
+        </div>
+        <div id="history-container"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL SYSTEM -->
+<div id="modal-container" class="modal-overlay" style="display:none;" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="flex-between" style="margin-bottom:12px;">
+      <h3 id="modal-title" style="font-size:14px; font-weight:600;">Title</h3>
+      <button onclick="closeModal()" style="background:none; border:none; font-size:16px; cursor:pointer;">✕</button>
+    </div>
+    <div id="modal-body"></div>
   </div>
+</div>
 
-  <script>
-    const slideTrack = document.getElementById('slideTrack');
-    const slideLinks = document.querySelectorAll('.slide-link');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('overlay');
-    const menuBtn = document.getElementById('menuBtn');
+<script>
+let inventory = [];
+let invoices = [];
+let stockLogs = [];
+let cart = [];
+let editingItemId = null;
+let selectedInvoiceIds = new Set();
 
-    // Horizontal Slide Navigation Logic
-    function goToSlide(index) {
-      slideTrack.style.transform = `translateX(-${index * 100}%)`;
+const navTabs = ['dashboard', 'inventory', 'stock-history', 'sale', 'history'];
+const money = n => `₹${Number(n || 0).toFixed(2)}`;
+const todayStr = () => new Date().toISOString().slice(0, 10);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
-      slideLinks.forEach((link, idx) => {
-        if (idx === index) {
-          link.classList.add('active');
-        } else {
-          link.classList.remove('active');
-        }
-      });
+function initData() {
+  try {
+    inventory = JSON.parse(localStorage.getItem('inventory-items')) || [];
+    invoices = JSON.parse(localStorage.getItem('sales-invoices')) || [];
+    stockLogs = JSON.parse(localStorage.getItem('stock-logs')) || [];
+  } catch(e) { inventory = []; invoices = []; stockLogs = []; }
+  render();
+}
 
-      if (window.innerWidth <= 768) {
-        closeSidebar();
+function saveData() {
+  localStorage.setItem('inventory-items', JSON.stringify(inventory));
+  localStorage.setItem('sales-invoices', JSON.stringify(invoices));
+  localStorage.setItem('stock-logs', JSON.stringify(stockLogs));
+  render();
+}
+
+function setTab(tab, direction = 'auto') {
+  const currentTab = navTabs.find(t => {
+    const el = document.getElementById('view-' + t);
+    return el && el.classList.contains('active-view');
+  }) || 'dashboard';
+
+  const currentIndex = navTabs.indexOf(currentTab);
+  const targetIndex = navTabs.indexOf(tab);
+
+  let slideClass = 'slide-right';
+  if (direction === 'left' || (direction === 'auto' && targetIndex < currentIndex)) {
+    slideClass = 'slide-left';
+  }
+
+  navTabs.concat(['receipt']).forEach(t => {
+    const viewEl = document.getElementById('view-' + t);
+    const btn = document.getElementById('nav-' + t);
+
+    if (viewEl) {
+      if (t === tab) {
+        viewEl.className = 'tab-view ' + slideClass;
+        void viewEl.offsetWidth;
+        viewEl.classList.add('active-view');
+      } else {
+        viewEl.classList.remove('active-view');
       }
     }
+    if (btn) btn.classList.toggle('active', t === tab);
+  });
 
-    // Mobile Sidebar Drawer Controller
-    function openSidebar() {
-      sidebar.classList.add('active');
-      overlay.classList.add('active');
-    }
+  render();
+}
 
-    function closeSidebar() {
-      sidebar.classList.remove('active');
-      overlay.classList.remove('active');
-    }
+/* Touch Gesture Setup */
+let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0;
+document.addEventListener('touchstart', e => {
+  touchStartX = e.changedTouches[0].screenX;
+  touchStartY = e.changedTouches[0].screenY;
+}, { passive: true });
 
-    menuBtn.addEventListener('click', openSidebar);
-    overlay.addEventListener('click', closeSidebar);
-  </script>
+document.addEventListener('touchend', e => {
+  touchEndX = e.changedTouches[0].screenX;
+  touchEndY = e.changedTouches[0].screenY;
+  const modal = document.getElementById('modal-container');
+  if (modal && modal.style.display !== 'none') return;
+
+  const diffX = touchEndX - touchStartX;
+  const diffY = touchEndY - touchStartY;
+
+  if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 45) {
+    const activeTab = navTabs.find(t => document.getElementById('view-' + t)?.classList.contains('active-view'));
+    if (!activeTab) return;
+    const currentIndex = navTabs.indexOf(activeTab);
+
+    if (diffX < 0 && currentIndex < navTabs.length - 1) setTab(navTabs[currentIndex + 1], 'right');
+    else if (diffX > 0 && currentIndex > 0) setTab(navTabs[currentIndex - 1], 'left');
+  }
+}, { passive: true });
+
+function render() {
+  const lowStock = inventory.filter(i => Number(i.qty) <= Number(i.lowStockAt ?? 5));
+  const totalUnits = inventory.reduce((s,i) => s + Number(i.qty), 0);
+  const totalStockVal = inventory.reduce((s,i) => s + (Number(i.qty) * Number(i.price)), 0);
+  
+  const today = todayStr();
+  const todaysInvoices = invoices.filter(v => v.date === today);
+  const todaysRevenue = todaysInvoices.reduce((s,v) => s + v.total, 0);
+  const todaysProfit = todaysInvoices.reduce((s,v) => s + (v.profit || 0), 0);
+  const allTimeProfit = invoices.reduce((s,v) => s + (v.profit || 0), 0);
+
+  document.getElementById('stat-prod-count').innerText = inventory.length;
+  document.getElementById('stat-unit-count').innerText = totalUnits;
+  document.getElementById('stat-stock-val').innerText = money(totalStockVal);
+  document.getElementById('stat-today-sales').innerText = money(todaysRevenue);
+  document.getElementById('stat-today-profit').innerText = money(todaysProfit);
+  document.getElementById('stat-all-profit').innerText = money(allTimeProfit);
+  
+  const badge = document.getElementById('low-count-badge');
+  if(lowStock.length > 0) {
+    badge.style.display = 'inline-block';
+    badge.innerText = lowStock.length;
+    document.getElementById('low-stock-alert').style.display = 'block';
+    document.getElementById('low-stock-items-list').innerText = lowStock.map(i => `${i.name} (${i.qty} left)`).join(', ');
+  } else {
+    badge.style.display = 'none';
+    document.getElementById('low-stock-alert').style.display = 'none';
+  }
+
+  const recentList = document.getElementById('recent-sales-list');
+  if(invoices.length === 0) {
+    recentList.innerHTML = '<div style="text-align:center; font-size:12px; color:#94a3b8; padding:16px;">No sales recorded yet.</div>';
+  } else {
+    recentList.innerHTML = invoices.slice(0, 5).map(v => `
+      <div class="flex-between" style="padding:8px 0; border-bottom:1px solid #f1f5f9; font-size:13px;">
+        <div>
+          <div style="font-weight:600;">${v.invoiceNo}</div>
+          <div style="font-size:11px; color:#64748b;">${v.customer || 'Walk-in customer'} · ${v.date}</div>
+        </div>
+        <div style="font-weight:600;">${money(v.total)}</div>
+      </div>
+    `).join('');
+  }
+
+  renderInventory();
+  renderStockHistory();
+  renderSaleProducts();
+  renderHistory();
+}
+
+function renderInventory() {
+  const query = (document.getElementById('inv-search').value || '').toLowerCase();
+  const filtered = inventory.filter(i => i.name.toLowerCase().includes(query) || (i.sku||'').toLowerCase().includes(query));
+  document.getElementById('inv-count-sub').innerText = `${inventory.length} products tracked`;
+  
+  const tbody = document.getElementById('inventory-table-body');
+  if(filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center" style="color:#94a3b8; padding:20px;">No items found.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(i => {
+    const isLow = Number(i.qty) <= Number(i.lowStockAt ?? 5);
+    return `
+      <tr style="${isLow ? 'background:#fffbeb;' : ''}">
+        <td style="font-weight:500;">${i.name}</td>
+        <td style="color:#64748b;">${i.sku || '—'}</td>
+        <td class="text-right">${money(i.price)}</td>
+        <td class="text-center">
+          <span style="font-weight:bold; ${isLow ? 'color:#d97706;' : ''}">${i.qty}</span>
+        </td>
+        <td class="text-right">
+          <button onclick="editProduct('${i.id}')" style="border:none; background:none; cursor:pointer;">✏️</button>
+          <button onclick="deleteProduct('${i.id}')" style="border:none; background:none; cursor:pointer;">🗑️</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function recordStockLog(item, addedQty, type) {
+  stockLogs.unshift({
+    id: uid(),
+    date: todayStr(),
+    time: new Date().toLocaleTimeString(),
+    productName: item.name,
+    sku: item.sku || '—',
+    qtyAdded: addedQty,
+    costPrice: item.costPrice || 0,
+    type: type
+  });
+}
+
+function editProduct(id) {
+  const item = inventory.find(i => i.id === id);
+  if(item) openProductModal(item);
+}
+
+function deleteProduct(id) {
+  if(confirm('Are you sure you want to delete this product?')) {
+    inventory = inventory.filter(i => i.id !== id);
+    saveData();
+  }
+}
+
+function openProductModal(item = null) {
+  editingItemId = item ? item.id : null;
+  document.getElementById('modal-title').innerText = item ? 'Edit product' : 'Add product';
+  document.getElementById('modal-body').innerHTML = `
+    <label style="font-size:11px; color:#64748b;">Product name</label>
+    <input type="text" id="m-name" class="input" value="${item ? item.name : ''}" placeholder="e.g. Basmati Rice 5kg" />
+    <label style="font-size:11px; color:#64748b;">SKU (optional)</label>
+    <input type="text" id="m-sku" class="input" value="${item ? (item.sku||'') : ''}" placeholder="e.g. RICE-01" />
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+      <div>
+        <label style="font-size:11px; color:#64748b;">Cost price</label>
+        <input type="number" id="m-cost" class="input" value="${item ? (item.costPrice||'') : ''}" placeholder="0.00" />
+      </div>
+      <div>
+        <label style="font-size:11px; color:#64748b;">Selling price</label>
+        <input type="number" id="m-price" class="input" value="${item ? item.price : ''}" placeholder="0.00" />
+      </div>
+    </div>
+    <label style="font-size:11px; color:#64748b;">${item ? 'Quantity (Set Total)' : 'Initial Quantity'}</label>
+    <input type="number" id="m-qty" class="input" value="${item ? item.qty : ''}" placeholder="0" />
+    <label style="font-size:11px; color:#64748b;">Low stock alert threshold</label>
+    <input type="number" id="m-low" class="input" value="${item ? (item.lowStockAt??5) : 5}" />
+    <button class="btn" style="width:100%; margin-top:8px;" onclick="saveProductModal()">Save product</button>
+  `;
+  document.getElementById('modal-container').style.display = 'flex';
+}
+
+function saveProductModal() {
+  const name = document.getElementById('m-name').value.trim();
+  const price = Number(document.getElementById('m-price').value);
+  const qty = Number(document.getElementById('m-qty').value);
+  if(!name || isNaN(price) || isNaN(qty)) return;
+
+  const newItem = {
+    id: editingItemId || uid(),
+    name,
+    sku: document.getElementById('m-sku').value.trim(),
+    costPrice: Number(document.getElementById('m-cost').value || 0),
+    price,
+    qty,
+    lowStockAt: Number(document.getElementById('m-low').value || 5)
+  };
+
+  if(editingItemId) {
+    const existing = inventory.find(i => i.id === editingItemId);
+    const diff = qty - (existing ? Number(existing.qty) : 0);
+    if(diff > 0) recordStockLog(newItem, diff, 'Stock Restock');
+    inventory = inventory.map(i => i.id === editingItemId ? newItem : i);
+  } else {
+    if(qty > 0) recordStockLog(newItem, qty, 'New Product Initial Stock');
+    inventory.unshift(newItem);
+  }
+  closeModal();
+  saveData();
+}
+
+function renderStockHistory() {
+  const container = document.getElementById('stock-history-container');
+  const totalUnitsAdded = stockLogs.reduce((s, l) => s + l.qtyAdded, 0);
+  const totalCostVal = stockLogs.reduce((s, l) => s + (l.qtyAdded * l.costPrice), 0);
+
+  document.getElementById('stock-hist-count').innerText = stockLogs.length;
+  document.getElementById('stock-hist-units').innerText = totalUnitsAdded;
+  document.getElementById('stock-hist-cost').innerText = money(totalCostVal);
+
+  if(stockLogs.length === 0) {
+    container.innerHTML = '<div style="text-align:center; font-size:12px; color:#94a3b8; padding:20px;">No stock addition history recorded.</div>';
+    return;
+  }
+
+  container.innerHTML = stockLogs.map(log => `
+    <div class="flex-between" style="padding:12px; border-bottom:1px solid #f1f5f9;">
+      <div>
+        <div style="font-weight:600; font-size:13px;">${log.productName} <span style="font-size:11px; color:#64748b; font-weight:normal;">(SKU: ${log.sku})</span></div>
+        <div style="font-size:11px; color:#64748b;">${log.type} · ${log.date} ${log.time}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-weight:600; font-size:13px; color:#10b981;">+${log.qtyAdded} units</div>
+        <div style="font-size:11px; color:#64748b;">Valued @ ${money(log.qtyAdded * log.costPrice)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderSaleProducts() {
+  const query = (document.getElementById('sale-search').value || '').toLowerCase();
+  const available = inventory.filter(i => i.qty > 0 && i.name.toLowerCase().includes(query));
+  const grid = document.getElementById('sale-products-grid');
+  
+  if(available.length === 0) {
+    grid.innerHTML = '<div style="color:#94a3b8; font-size:13px; grid-column:1/-1;">No available items.</div>';
+    return;
+  }
+  grid.innerHTML = available.map(p => `
+    <div class="card" style="margin:0; cursor:pointer;" onclick="addToCart('${p.id}')">
+      <div style="font-weight:600; font-size:13px;">${p.name}</div>
+      <div class="flex-between" style="font-size:11px; color:#64748b; margin-top:6px;">
+        <span>${money(p.price)}</span>
+        <span>${p.qty} in stock</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addToCart(id) {
+  const prod = inventory.find(i => i.id === id);
+  if(!prod) return;
+  const inCart = cart.find(c => c.id === id);
+  if(inCart) {
+    if(inCart.qty < prod.qty) inCart.qty++;
+  } else {
+    cart.push({ id: prod.id, name: prod.name, price: prod.price, costPrice: prod.costPrice||0, qty: 1 });
+  }
+  renderCart();
+}
+
+function updateCartQty(id, delta) {
+  const item = cart.find(c => c.id === id);
+  const stock = inventory.find(i => i.id === id)?.qty || 0;
+  if(item) {
+    item.qty += delta;
+    if(item.qty <= 0) cart = cart.filter(c => c.id !== id);
+    else if(item.qty > stock) item.qty = stock;
+  }
+  renderCart();
+}
+
+function setCartQtyDirect(id, newQtyVal) {
+  const parsedVal = parseInt(newQtyVal, 10);
+  const stock = inventory.find(i => i.id === id)?.qty || 0;
+  if(isNaN(parsedVal) || parsedVal <= 0) {
+    cart = cart.filter(c => c.id !== id);
+  } else {
+    const item = cart.find(c => c.id === id);
+    if(item) item.qty = Math.min(parsedVal, stock);
+  }
+  renderCart();
+}
+
+function renderCart() {
+  const container = document.getElementById('cart-items-container');
+  let total = 0;
+  if(cart.length === 0) {
+    container.innerHTML = '<div style="text-align:center; color:#94a3b8; font-size:12px;">Cart is empty</div>';
+  } else {
+    container.innerHTML = cart.map(c => {
+      total += c.price * c.qty;
+      const stock = inventory.find(i => i.id === c.id)?.qty || 0;
+      return `
+        <div class="flex-between" style="font-size:13px; margin-bottom:8px;">
+          <div style="flex:1;">
+            <div style="font-weight:500;">${c.name}</div>
+            <div style="font-size:11px; color:#64748b;">${money(c.price)} each</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:4px;">
+            <button onclick="updateCartQty('${c.id}', -1)" style="border:1px solid #cbd5e1; background:#fff; border-radius:4px; width:22px; height:22px; cursor:pointer;">-</button>
+            <input type="number" min="1" max="${stock}" value="${c.qty}" class="cart-qty-input" onchange="setCartQtyDirect('${c.id}', this.value)" />
+            <button onclick="updateCartQty('${c.id}', 1)" style="border:1px solid #cbd5e1; background:#fff; border-radius:4px; width:22px; height:22px; cursor:pointer;">+</button>
+          </div>
+          <div style="width:60px; text-align:right; font-weight:600;">${money(c.price * c.qty)}</div>
+        </div>
+      `;
+    }).join('');
+  }
+  document.getElementById('cart-total-val').innerText = money(total);
+  document.getElementById('btn-complete-sale').disabled = cart.length === 0;
+}
+
+function toggleCustDetails() {
+  const fields = document.getElementById('cust-extra-fields');
+  const btn = document.getElementById('btn-more-cust');
+  if(fields.style.display === 'none') {
+    fields.style.display = 'block';
+    btn.innerText = '- Hide details';
+  } else {
+    fields.style.display = 'none';
+    btn.innerText = '+ Add address, contact, PAN';
+  }
+}
+
+function completeSale() {
+  if(cart.length === 0) return;
+  const invoiceNo = `INV-${String(invoices.length + 1).padStart(4, '0')}`;
+  const total = cart.reduce((s,c) => s + (c.price * c.qty), 0);
+  const profit = cart.reduce((s,c) => s + ((c.price - (c.costPrice||0)) * c.qty), 0);
+
+  const invoice = {
+    id: uid(),
+    invoiceNo,
+    customer: document.getElementById('cust-name').value.trim(),
+    customerAddress: document.getElementById('cust-addr').value.trim(),
+    customerContact: document.getElementById('cust-phone').value.trim(),
+    customerPan: document.getElementById('cust-pan').value.trim(),
+    date: todayStr(),
+    time: new Date().toLocaleTimeString(),
+    items: [...cart],
+    total,
+    profit
+  };
+
+  inventory = inventory.map(i => {
+    const sold = cart.find(c => c.id === i.id);
+    return sold ? { ...i, qty: i.qty - sold.qty } : i;
+  });
+
+  invoices.unshift(invoice);
+  saveData();
+
+  cart = [];
+  document.getElementById('cust-name').value = '';
+  document.getElementById('cust-addr').value = '';
+  document.getElementById('cust-phone').value = '';
+  document.getElementById('cust-pan').value = '';
+  renderCart();
+
+  showReceipt(invoice);
+}
+
+function showReceipt(inv) {
+  document.getElementById('rec-inv-no').innerText = inv.invoiceNo;
+  document.getElementById('rec-date-time').innerText = `${inv.date} · ${inv.time}`;
+  document.getElementById('rec-cust-details').innerHTML = `
+    <div>Billed to: <strong>${inv.customer || 'Walk-in customer'}</strong></div>
+    ${inv.customerAddress ? `<div style="font-size:11px;">Address: ${inv.customerAddress}</div>` : ''}
+    ${inv.customerContact ? `<div style="font-size:11px;">Contact: ${inv.customerContact}</div>` : ''}
+    ${inv.customerPan ? `<div style="font-size:11px;">PAN: ${inv.customerPan}</div>` : ''}
+  `;
+  document.getElementById('rec-items-list').innerHTML = inv.items.map(it => `
+    <div class="flex-between" style="font-size:13px; padding:4px 0;">
+      <div>${it.name} <span style="color:#94a3b8;">× ${it.qty}</span></div>
+      <div>${money(it.price * it.qty)}</div>
+    </div>
+  `).join('');
+  document.getElementById('rec-total').innerText = money(inv.total);
+  setTab('receipt');
+}
+
+/* Multi-Selectable Sales Engine */
+function toggleSelectInvoice(id, event) {
+  event.stopPropagation();
+  if(selectedInvoiceIds.has(id)) selectedInvoiceIds.delete(id);
+  else selectedInvoiceIds.add(id);
+  updateSelectedSummary();
+  renderHistoryListOnly();
+}
+
+function toggleSelectAllInvoices(checked) {
+  if(checked) invoices.forEach(v => selectedInvoiceIds.add(v.id));
+  else selectedInvoiceIds.clear();
+  updateSelectedSummary();
+  renderHistoryListOnly();
+}
+
+function clearSelectedInvoices() {
+  selectedInvoiceIds.clear();
+  const cb = document.getElementById('select-all-invoices');
+  if(cb) cb.checked = false;
+  updateSelectedSummary();
+  renderHistoryListOnly();
+}
+
+function updateSelectedSummary() {
+  const card = document.getElementById('selected-summary-card');
+  const selectAllCb = document.getElementById('select-all-invoices');
+
+  if(selectedInvoiceIds.size === 0) {
+    card.style.display = 'none';
+    if(selectAllCb) selectAllCb.checked = false;
+    return;
+  }
+
+  card.style.display = 'block';
+  const selected = invoices.filter(v => selectedInvoiceIds.has(v.id));
+  
+  document.getElementById('sel-count').innerText = selected.length;
+  document.getElementById('sel-units').innerText = selected.reduce((s, v) => s + v.items.reduce((a, i) => a + i.qty, 0), 0);
+  document.getElementById('sel-revenue').innerText = money(selected.reduce((s, v) => s + v.total, 0));
+  document.getElementById('sel-profit').innerText = money(selected.reduce((s, v) => s + (v.profit || 0), 0));
+
+  if(selectAllCb) selectAllCb.checked = invoices.length > 0 && selectedInvoiceIds.size === invoices.length;
+}
+
+function renderHistory() {
+  document.getElementById('hist-count').innerText = invoices.length;
+  document.getElementById('hist-units').innerText = invoices.reduce((s,v) => s + v.items.reduce((a,i) => a + i.qty, 0), 0);
+  document.getElementById('hist-revenue').innerText = money(invoices.reduce((s,v) => s + v.total, 0));
+
+  updateSelectedSummary();
+  renderHistoryListOnly();
+}
+
+function renderHistoryListOnly() {
+  const container = document.getElementById('history-container');
+  if(invoices.length === 0) {
+    container.innerHTML = '<div style="text-align:center; font-size:12px; color:#94a3b8; padding:20px;">No sales history available.</div>';
+    return;
+  }
+
+  container.innerHTML = invoices.map(v => {
+    const isChecked = selectedInvoiceIds.has(v.id);
+    return `
+      <div class="flex-between" style="padding:12px; border-bottom:1px solid #f1f5f9; background:${isChecked ? '#f0fdf4' : '#fff'}; cursor:pointer;" onclick="showReceiptDetails('${v.id}')">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <input type="checkbox" ${isChecked ? 'checked' : ''} onclick="toggleSelectInvoice('${v.id}', event)" style="width:16px; height:16px; cursor:pointer;" />
+          <div>
+            <div style="font-weight:600; font-size:13px;">${v.invoiceNo}</div>
+            <div style="font-size:11px; color:#64748b;">${v.customer || 'Walk-in customer'} · ${v.date}</div>
+          </div>
+        </div>
+        <div style="font-weight:600; font-size:13px;">${money(v.total)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function showReceiptDetails(id) {
+  const inv = invoices.find(v => v.id === id);
+  if(inv) showReceipt(inv);
+}
+
+function openModal(id) {
+  const titleMap = {
+    'modal-products': 'Available products',
+    'modal-stock': 'All product stock',
+    'modal-valuation': 'Stock valuation by product',
+    'modal-today-sales': "Today's sales"
+  };
+  document.getElementById('modal-title').innerText = titleMap[id] || 'Details';
+  const body = document.getElementById('modal-body');
+  
+  if(id === 'modal-products' || id === 'modal-stock') {
+    body.innerHTML = inventory.map(i => `
+      <div class="flex-between" style="padding:8px 0; border-bottom:1px solid #f1f5f9; font-size:13px;">
+        <div><strong>${i.name}</strong><br/><span style="font-size:11px; color:#64748b;">${money(i.price)}</span></div>
+        <div style="font-weight:600;">${i.qty} units</div>
+      </div>
+    `).join('') || 'No products available.';
+  } else if(id === 'modal-valuation') {
+    const totalVal = inventory.reduce((s,i) => s + (i.qty * i.price), 0);
+    body.innerHTML = inventory.map(i => `
+      <div class="flex-between" style="padding:8px 0; border-bottom:1px solid #f1f5f9; font-size:13px;">
+        <div><strong>${i.name}</strong><br/><span style="font-size:11px; color:#64748b;">${i.qty} × ${money(i.price)}</span></div>
+        <div style="font-weight:600;">${money(i.qty * i.price)}</div>
+      </div>
+    `).join('') + `<div class="flex-between" style="font-weight:600; padding-top:10px;"><span>Total</span><span>${money(totalVal)}</span></div>`;
+  } else if(id === 'modal-today-sales') {
+    const today = todayStr();
+    const list = invoices.filter(v => v.date === today);
+    body.innerHTML = list.map(v => `
+      <div class="flex-between" style="padding:8px 0; border-bottom:1px solid #f1f5f9; font-size:13px;">
+        <div><strong>${v.invoiceNo}</strong><br/><span style="font-size:11px; color:#64748b;">${v.customer||'Walk-in'} · ${v.time}</span></div>
+        <div style="font-weight:600;">${money(v.total)}</div>
+      </div>
+    `).join('') || 'No sales recorded today.';
+  }
+  document.getElementById('modal-container').style.display = 'flex';
+}
+
+function openProfitModal(type) {
+  document.getElementById('modal-title').innerText = type === 'today' ? "Today's profit by product" : "All-time profit by product";
+  const today = todayStr();
+  const list = type === 'today' ? invoices.filter(v => v.date === today) : invoices;
+  
+  const map = {};
+  list.forEach(inv => {
+    inv.items.forEach(it => {
+      if(!map[it.id]) map[it.id] = { name: it.name, qty: 0, revenue: 0, cost: 0 };
+      map[it.id].qty += it.qty;
+      map[it.id].revenue += it.price * it.qty;
+      map[it.id].cost += (it.costPrice || 0) * it.qty;
+    });
+  });
+
+  const rows = Object.values(map).map(p => ({ ...p, profit: p.revenue - p.cost }));
+  document.getElementById('modal-body').innerHTML = rows.map(r => `
+    <div style="padding:8px 0; border-bottom:1px solid #f1f5f9; font-size:13px;">
+      <div class="flex-between">
+        <strong>${r.name}</strong>
+        <span style="font-weight:600; color:${r.profit >= 0 ? '#059669' : '#ef4444'};">${money(r.profit)}</span>
+      </div>
+      <div class="flex-between" style="font-size:11px; color:#64748b; margin-top:2px;">
+        <span>${r.qty} sold · Rev: ${money(r.revenue)}</span>
+        <span>Cost: ${money(r.cost)}</span>
+      </div>
+    </div>
+  `).join('') || 'No sales metrics recorded for this period.';
+  document.getElementById('modal-container').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('modal-container').style.display = 'none';
+}
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
+
+initData();
+</script>
 </body>
 </html>

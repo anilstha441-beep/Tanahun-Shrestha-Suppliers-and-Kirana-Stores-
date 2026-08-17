@@ -295,8 +295,13 @@
 
     <!-- SALES HISTORY VIEW -->
     <div id="view-history" class="tab-view">
-      <div class="page-title">Sales History & Audit</div>
-      <div class="page-sub">Select multiple invoices to calculate dynamic totals.</div>
+      <div class="flex-between" style="margin-bottom:12px;">
+        <div>
+          <div class="page-title">Sales History & Audit</div>
+          <div class="page-sub">Select multiple invoices to calculate dynamic totals.</div>
+        </div>
+        <button class="btn" onclick="openManualInvoiceModal()">+ Add Past Invoice</button>
+      </div>
       
       <div class="grid-stats" style="grid-template-columns: repeat(3, 1fr);">
         <div class="stat-card">
@@ -776,6 +781,75 @@ function showReceipt(inv) {
   `).join('');
   document.getElementById('rec-total').innerText = money(inv.total);
   setTab('receipt');
+}
+
+/* Manual Sales Invoice Entry */
+function openManualInvoiceModal() {
+  document.getElementById('modal-title').innerText = 'Add Past Invoice';
+  document.getElementById('modal-body').innerHTML = `
+    <label style="font-size:11px; color:#64748b;">Invoice Number</label>
+    <input type="text" id="man-inv-no" class="input" placeholder="INV-0001" value="INV-${String(invoices.length + 1).padStart(4, '0')}" />
+    
+    <label style="font-size:11px; color:#64748b;">Customer Name</label>
+    <input type="text" id="man-cust-name" class="input" placeholder="Walk-in customer" />
+    
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+      <div>
+        <label style="font-size:11px; color:#64748b;">Date</label>
+        <input type="date" id="man-date" class="input" value="${todayStr()}" />
+      </div>
+      <div>
+        <label style="font-size:11px; color:#64748b;">Time</label>
+        <input type="time" id="man-time" class="input" value="${new Date().toTimeString().slice(0,5)}" />
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+      <div>
+        <label style="font-size:11px; color:#64748b;">Total Amount (₹)</label>
+        <input type="number" id="man-total" class="input" placeholder="0.00" min="0" step="0.01" />
+      </div>
+      <div>
+        <label style="font-size:11px; color:#64748b;">Net Profit (₹) (Optional)</label>
+        <input type="number" id="man-profit" class="input" placeholder="0.00" min="0" step="0.01" />
+      </div>
+    </div>
+
+    <button class="btn" style="width:100%; margin-top:8px;" onclick="saveManualInvoice()">Save Invoice to History</button>
+  `;
+  document.getElementById('modal-container').style.display = 'flex';
+}
+
+function saveManualInvoice() {
+  const invNo = document.getElementById('man-inv-no').value.trim();
+  const customer = document.getElementById('man-cust-name').value.trim() || 'Walk-in customer';
+  const date = document.getElementById('man-date').value || todayStr();
+  const time = document.getElementById('man-time').value || new Date().toLocaleTimeString();
+  const total = parseFloat(document.getElementById('man-total').value);
+  const profit = parseFloat(document.getElementById('man-profit').value) || 0;
+
+  if (!invNo || isNaN(total) || total < 0) {
+    alert('Please enter a valid invoice number and total amount.');
+    return;
+  }
+
+  const customInvoice = {
+    id: uid(),
+    invoiceNo: invNo,
+    customer: customer,
+    customerAddress: '',
+    customerContact: '',
+    customerPan: '',
+    date: date,
+    time: time,
+    items: [{ name: 'Manual / Past Sale Entry', price: total, qty: 1 }],
+    total: total,
+    profit: profit
+  };
+
+  invoices.unshift(customInvoice);
+  saveData();
+  closeModal();
 }
 
 /* Multi-Selectable Sales Engine */

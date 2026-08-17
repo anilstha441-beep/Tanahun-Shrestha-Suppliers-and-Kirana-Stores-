@@ -56,8 +56,6 @@
     transform: none !important;
   }
 
-  .tab-view.slide-left, .tab-view.slide-right { transform: none !important; }
-
   /* UI Cards & Elements */
   .grid-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
   @media(min-width: 1024px) { .grid-stats { grid-template-columns: repeat(4, 1fr); } }
@@ -124,7 +122,6 @@
     <nav>
       <button class="nav-btn active" id="nav-dashboard" onclick="setTab('dashboard')">Dashboard</button>
       <button class="nav-btn" id="nav-inventory" onclick="setTab('inventory')">Inventory <span class="badge" id="low-count-badge" style="display:none;">0</span></button>
-      <button class="nav-btn" id="nav-stock-history" onclick="setTab('stock-history')">Stock Added History</button>
       <button class="nav-btn" id="nav-sale" onclick="setTab('sale')">New Sale</button>
       <button class="nav-btn" id="nav-history" onclick="setTab('history')">Sales History</button>
     </nav>
@@ -218,8 +215,13 @@
 
     <!-- STOCK HISTORY VIEW -->
     <div id="view-stock-history" class="tab-view">
-      <div class="page-title">Inventory Added History</div>
-      <div class="page-sub">Audit trail for all restocks and newly created products.</div>
+      <div class="flex-between" style="margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+        <div>
+          <div class="page-title">Inventory Added History</div>
+          <div class="page-sub">Audit trail for all restocks and newly created products.</div>
+        </div>
+        <button class="btn btn-outline" onclick="setTab('inventory')">← Back to Inventory</button>
+      </div>
       <div class="grid-stats" style="grid-template-columns: repeat(3, 1fr);">
         <div class="stat-card">
           <div class="stat-lbl">Restock Entries</div>
@@ -359,7 +361,7 @@ let cart = [];
 let editingItemId = null;
 let selectedInvoiceIds = new Set();
 
-const navTabs = ['dashboard', 'inventory', 'stock-history', 'sale', 'history'];
+const navTabs = ['dashboard', 'inventory', 'sale', 'history'];
 const money = n => `₹${Number(n || 0).toFixed(2)}`;
 const todayStr = () => new Date().toISOString().slice(0, 10);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -381,7 +383,7 @@ function saveData() {
 }
 
 function setTab(tab) {
-  navTabs.concat(['receipt']).forEach(t => {
+  navTabs.concat(['stock-history', 'receipt']).forEach(t => {
     const viewEl = document.getElementById('view-' + t);
     const btn = document.getElementById('nav-' + t);
 

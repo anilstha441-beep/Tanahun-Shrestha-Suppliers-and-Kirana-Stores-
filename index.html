@@ -61,7 +61,7 @@
   @media(min-width: 1024px) { .grid-stats { grid-template-columns: repeat(4, 1fr); } }
   .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; cursor: pointer; transition: border-color 0.2s; }
   .stat-card:hover { border-color: #34d399; }
-  .stat-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; font-size: 14px; margin-bottom: 12px; }
+  .stat-icon { width: fit-content; height: auto; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 10px; letter-spacing: 0.3px; text-transform: uppercase; padding: 4px 9px; margin-bottom: 12px; white-space: nowrap; }
   .stat-val { font-size: 18px; font-weight: 600; margin-bottom: 2px; }
   .stat-lbl { font-size: 12px; color: #64748b; }
   .alert-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 14px; margin-bottom: 20px; color: #b45309; font-size: 13px; }
@@ -72,6 +72,7 @@
   .btn-outline { background: #fff; border: 1px solid #cbd5e1; color: #475569; }
   .input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; outline: none; margin-bottom: 10px; }
   .input:focus { border-color: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
+  .error-text { color: #dc2626; font-size: 12px; margin: -6px 0 10px 2px; display: none; }
   
   /* Cart Quantity Direct Input */
   .cart-qty-input {
@@ -135,36 +136,36 @@
       
       <div class="grid-stats">
         <div class="stat-card" onclick="openModal('modal-products')">
-          <div class="stat-icon" style="background:#334155;">P</div>
+          <div class="stat-icon" style="background:#334155;">Products</div>
           <div class="stat-val" id="stat-prod-count">0</div>
           <div class="stat-lbl">Products</div>
         </div>
         <div class="stat-card" onclick="openModal('modal-stock')">
-          <div class="stat-icon" style="background:#0284c7;">U</div>
+          <div class="stat-icon" style="background:#0284c7;">Units</div>
           <div class="stat-val" id="stat-unit-count">0</div>
           <div class="stat-lbl">Units in stock</div>
         </div>
         <div class="stat-card" onclick="openModal('modal-valuation')">
-          <div class="stat-icon" style="background:#4f46e5;">V</div>
-          <div class="stat-val" id="stat-stock-val">₹0.00</div>
+          <div class="stat-icon" style="background:#4f46e5;">Value</div>
+          <div class="stat-val" id="stat-stock-val">Rs. 0.00</div>
           <div class="stat-lbl">Stock value</div>
         </div>
         <div class="stat-card" onclick="openModal('modal-today-sales')">
-          <div class="stat-icon" style="background:#059669;">S</div>
-          <div class="stat-val" id="stat-today-sales">₹0.00</div>
+          <div class="stat-icon" style="background:#059669;">Sales</div>
+          <div class="stat-val" id="stat-today-sales">Rs. 0.00</div>
           <div class="stat-lbl">Today's sales</div>
         </div>
       </div>
 
       <div class="grid-stats" style="grid-template-columns: repeat(2, 1fr);">
         <div class="stat-card" onclick="openProfitModal('today')">
-          <div class="stat-icon" style="background:#059669;">N</div>
-          <div class="stat-val" id="stat-today-profit">₹0.00</div>
+          <div class="stat-icon" style="background:#059669;">Net Profit</div>
+          <div class="stat-val" id="stat-today-profit">Rs. 0.00</div>
           <div class="stat-lbl">Today's net profit</div>
         </div>
         <div class="stat-card" onclick="openProfitModal('all')">
-          <div class="stat-icon" style="background:#0d9488;">A</div>
-          <div class="stat-val" id="stat-all-profit">₹0.00</div>
+          <div class="stat-icon" style="background:#0d9488;">All-Time</div>
+          <div class="stat-val" id="stat-all-profit">Rs. 0.00</div>
           <div class="stat-lbl">All-time net profit</div>
         </div>
       </div>
@@ -233,7 +234,7 @@
         </div>
         <div class="stat-card">
           <div class="stat-lbl">Added Cost Value</div>
-          <div class="stat-val" id="stock-hist-cost">₹0.00</div>
+          <div class="stat-val" id="stock-hist-cost">Rs. 0.00</div>
         </div>
       </div>
       <div class="card" style="padding:0;" id="stock-history-container"></div>
@@ -261,7 +262,7 @@
             <div id="cart-items-container" style="margin:12px 0;"></div>
             <div class="flex-between" style="font-weight:600; font-size:15px; border-top:1px solid #e2e8f0; padding-top:10px; margin-bottom:12px;">
               <span>Total</span>
-              <span id="cart-total-val">₹0.00</span>
+              <span id="cart-total-val">Rs. 0.00</span>
             </div>
             <button class="btn" style="width:100%;" id="btn-complete-sale" onclick="completeSale()" disabled>Complete sale & generate invoice</button>
           </div>
@@ -286,7 +287,7 @@
         <div id="rec-items-list" style="border-top:1px solid #f1f5f9; border-bottom:1px solid #f1f5f9; padding:8px 0; margin-bottom:12px;"></div>
         <div class="flex-between" style="font-weight:600; font-size:15px; margin-bottom:16px;">
           <span>Total</span>
-          <span id="rec-total">₹0.00</span>
+          <span id="rec-total">Rs. 0.00</span>
         </div>
         <div style="text-align:center; font-size:11px; color:#94a3b8; border-top:1px solid #f1f5f9; padding-top:8px;">Bill by TSS&KS</div>
       </div>
@@ -313,7 +314,7 @@
         </div>
         <div class="stat-card">
           <div class="stat-lbl">Revenue</div>
-          <div class="stat-val" id="hist-revenue">₹0.00</div>
+          <div class="stat-val" id="hist-revenue">Rs. 0.00</div>
         </div>
       </div>
 
@@ -325,8 +326,8 @@
         </div>
         <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:13px; color:#14532d;">
           <div><strong>Units:</strong> <span id="sel-units">0</span></div>
-          <div><strong>Revenue:</strong> <span id="sel-revenue">₹0.00</span></div>
-          <div><strong>Net Profit:</strong> <span id="sel-profit">₹0.00</span></div>
+          <div><strong>Revenue:</strong> <span id="sel-revenue">Rs. 0.00</span></div>
+          <div><strong>Net Profit:</strong> <span id="sel-profit">Rs. 0.00</span></div>
         </div>
       </div>
 
@@ -362,9 +363,30 @@ let editingItemId = null;
 let selectedInvoiceIds = new Set();
 
 const navTabs = ['dashboard', 'inventory', 'sale', 'history'];
-const money = n => `₹${Number(n || 0).toFixed(2)}`;
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const money = n => `Rs. ${Number(n || 0).toFixed(2)}`;
+
+// FIX: use local date/time instead of UTC so "today" matches the user's actual day
+const todayStr = () => {
+  const d = new Date();
+  const yr = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const dy = String(d.getDate()).padStart(2, '0');
+  return `${yr}-${mo}-${dy}`;
+};
+
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+// FIX: escape any user-supplied string before inserting into innerHTML (prevents XSS
+// via product names, SKUs, customer names/address/contact/PAN, etc.)
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[ch]));
+}
 
 function initData() {
   try {
@@ -462,8 +484,8 @@ function render() {
     recentList.innerHTML = invoices.slice(0, 5).map(v => `
       <div class="flex-between" style="padding:8px 0; border-bottom:1px solid #f1f5f9; font-size:13px;">
         <div>
-          <div style="font-weight:600;">${v.invoiceNo}</div>
-          <div style="font-size:11px; color:#64748b;">${v.customer || 'Walk-in customer'} · ${v.date}</div>
+          <div style="font-weight:600;">${escapeHtml(v.invoiceNo)}</div>
+          <div style="font-size:11px; color:#64748b;">${escapeHtml(v.customer || 'Walk-in customer')} · ${escapeHtml(v.date)}</div>
         </div>
         <div style="font-weight:600;">${money(v.total)}</div>
       </div>
@@ -490,8 +512,8 @@ function renderInventory() {
     const isLow = Number(i.qty) <= Number(i.lowStockAt ?? 5);
     return `
       <tr style="${isLow ? 'background:#fffbeb;' : ''}">
-        <td style="font-weight:500;">${i.name}</td>
-        <td style="color:#64748b;">${i.sku || '—'}</td>
+        <td style="font-weight:500;">${escapeHtml(i.name)}</td>
+        <td style="color:#64748b;">${escapeHtml(i.sku || '—')}</td>
         <td class="text-right">${money(i.price)}</td>
         <td class="text-center">
           <span style="font-weight:bold; ${isLow ? 'color:#d97706;' : ''}">${i.qty}</span>
@@ -535,42 +557,58 @@ function openProductModal(item = null) {
   document.getElementById('modal-title').innerText = item ? 'Edit product' : 'Add product';
   document.getElementById('modal-body').innerHTML = `
     <label style="font-size:11px; color:#64748b;">Product name</label>
-    <input type="text" id="m-name" class="input" value="${item ? item.name : ''}" placeholder="e.g. Basmati Rice 5kg" />
+    <input type="text" id="m-name" class="input" value="${item ? escapeHtml(item.name) : ''}" placeholder="e.g. Basmati Rice 5kg" />
     <label style="font-size:11px; color:#64748b;">SKU (optional)</label>
-    <input type="text" id="m-sku" class="input" value="${item ? (item.sku||'') : ''}" placeholder="e.g. RICE-01" />
+    <input type="text" id="m-sku" class="input" value="${item ? escapeHtml(item.sku||'') : ''}" placeholder="e.g. RICE-01" />
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
       <div>
         <label style="font-size:11px; color:#64748b;">Cost price</label>
-        <input type="number" id="m-cost" class="input" value="${item ? (item.costPrice||'') : ''}" placeholder="0.00" />
+        <input type="number" id="m-cost" class="input" min="0" step="0.01" value="${item ? (item.costPrice||'') : ''}" placeholder="0.00" />
       </div>
       <div>
         <label style="font-size:11px; color:#64748b;">Selling price</label>
-        <input type="number" id="m-price" class="input" value="${item ? item.price : ''}" placeholder="0.00" />
+        <input type="number" id="m-price" class="input" min="0" step="0.01" value="${item ? item.price : ''}" placeholder="0.00" />
       </div>
     </div>
     <label style="font-size:11px; color:#64748b;">${item ? 'Quantity (Set Total)' : 'Initial Quantity'}</label>
-    <input type="number" id="m-qty" class="input" value="${item ? item.qty : ''}" placeholder="0" />
+    <input type="number" id="m-qty" class="input" min="0" step="1" value="${item ? item.qty : ''}" placeholder="0" />
     <label style="font-size:11px; color:#64748b;">Low stock alert threshold</label>
-    <input type="number" id="m-low" class="input" value="${item ? (item.lowStockAt??5) : 5}" />
+    <input type="number" id="m-low" class="input" min="0" step="1" value="${item ? (item.lowStockAt??5) : 5}" />
+    <div class="error-text" id="m-error"></div>
     <button class="btn" style="width:100%; margin-top:8px;" onclick="saveProductModal()">Save product</button>
   `;
   document.getElementById('modal-container').style.display = 'flex';
 }
 
+function showModalError(msg) {
+  const el = document.getElementById('m-error');
+  if(!el) return;
+  el.innerText = msg;
+  el.style.display = 'block';
+}
+
 function saveProductModal() {
   const name = document.getElementById('m-name').value.trim();
   const price = Number(document.getElementById('m-price').value);
+  const cost = Number(document.getElementById('m-cost').value || 0);
   const qty = Number(document.getElementById('m-qty').value);
-  if(!name || isNaN(price) || isNaN(qty)) return;
+  const lowAt = Number(document.getElementById('m-low').value || 5);
+
+  // FIX: validate presence and reject negative/invalid numeric inputs
+  if(!name) return showModalError('Product name is required.');
+  if(isNaN(price) || price < 0) return showModalError('Selling price must be a valid non-negative number.');
+  if(isNaN(cost) || cost < 0) return showModalError('Cost price must be a valid non-negative number.');
+  if(isNaN(qty) || qty < 0 || !Number.isInteger(qty)) return showModalError('Quantity must be a valid non-negative whole number.');
+  if(isNaN(lowAt) || lowAt < 0) return showModalError('Low stock threshold must be a valid non-negative number.');
 
   const newItem = {
     id: editingItemId || uid(),
     name,
     sku: document.getElementById('m-sku').value.trim(),
-    costPrice: Number(document.getElementById('m-cost').value || 0),
+    costPrice: cost,
     price,
     qty,
-    lowStockAt: Number(document.getElementById('m-low').value || 5)
+    lowStockAt: lowAt
   };
 
   if(editingItemId) {
@@ -603,8 +641,8 @@ function renderStockHistory() {
   container.innerHTML = stockLogs.map(log => `
     <div class="flex-between" style="padding:12px; border-bottom:1px solid #f1f5f9;">
       <div>
-        <div style="font-weight:600; font-size:13px;">${log.productName} <span style="font-size:11px; color:#64748b; font-weight:normal;">(SKU: ${log.sku})</span></div>
-        <div style="font-size:11px; color:#64748b;">${log.type} · ${log.date} ${log.time}</div>
+        <div style="font-weight:600; font-size:13px;">${escapeHtml(log.productName)} <span style="font-size:11px; color:#64748b; font-weight:normal;">(SKU: ${escapeHtml(log.sku)})</span></div>
+        <div style="font-size:11px; color:#64748b;">${escapeHtml(log.type)} · ${escapeHtml(log.date)} ${escapeHtml(log.time)}</div>
       </div>
       <div style="text-align:right;">
         <div style="font-weight:600; font-size:13px; color:#10b981;">+${log.qtyAdded} units</div>
@@ -625,7 +663,7 @@ function renderSaleProducts() {
   }
   grid.innerHTML = available.map(p => `
     <div class="card" style="margin:0; cursor:pointer;" onclick="addToCart('${p.id}')">
-      <div style="font-weight:600; font-size:13px;">${p.name}</div>
+      <div style="font-weight:600; font-size:13px;">${escapeHtml(p.name)}</div>
       <div class="flex-between" style="font-size:11px; color:#64748b; margin-top:6px;">
         <span>${money(p.price)}</span>
         <span>${p.qty} in stock</span>
@@ -681,7 +719,7 @@ function renderCart() {
       return `
         <div class="flex-between" style="font-size:13px; margin-bottom:8px;">
           <div style="flex:1;">
-            <div style="font-weight:500;">${c.name}</div>
+            <div style="font-weight:500;">${escapeHtml(c.name)}</div>
             <div style="font-size:11px; color:#64748b;">${money(c.price)} each</div>
           </div>
           <div style="display:flex; align-items:center; gap:4px;">
@@ -712,6 +750,21 @@ function toggleCustDetails() {
 
 function completeSale() {
   if(cart.length === 0) return;
+
+  // FIX: re-validate cart against live inventory right before committing the sale,
+  // in case stock changed since items were added to the cart.
+  for(const c of cart) {
+    const invItem = inventory.find(i => i.id === c.id);
+    if(!invItem) {
+      alert(`"${c.name}" is no longer in inventory. Please remove it from the cart.`);
+      return;
+    }
+    if(c.qty > invItem.qty) {
+      alert(`Only ${invItem.qty} unit(s) of "${invItem.name}" are available. Please adjust the cart quantity.`);
+      return;
+    }
+  }
+
   const invoiceNo = `INV-${String(invoices.length + 1).padStart(4, '0')}`;
   const total = cart.reduce((s,c) => s + (c.price * c.qty), 0);
   const profit = cart.reduce((s,c) => s + ((c.price - (c.costPrice||0)) * c.qty), 0);
@@ -752,14 +805,14 @@ function showReceipt(inv) {
   document.getElementById('rec-inv-no').innerText = inv.invoiceNo;
   document.getElementById('rec-date-time').innerText = `${inv.date} · ${inv.time}`;
   document.getElementById('rec-cust-details').innerHTML = `
-    <div>Billed to: <strong>${inv.customer || 'Walk-in customer'}</strong></div>
-    ${inv.customerAddress ? `<div style="font-size:11px;">Address: ${inv.customerAddress}</div>` : ''}
-    ${inv.customerContact ? `<div style="font-size:11px;">Contact: ${inv.customerContact}</div>` : ''}
-    ${inv.customerPan ? `<div style="font-size:11px;">PAN: ${inv.customerPan}</div>` : ''}
+    <div>Billed to: <strong>${escapeHtml(inv.customer || 'Walk-in customer')}</strong></div>
+    ${inv.customerAddress ? `<div style="font-size:11px;">Address: ${escapeHtml(inv.customerAddress)}</div>` : ''}
+    ${inv.customerContact ? `<div style="font-size:11px;">Contact: ${escapeHtml(inv.customerContact)}</div>` : ''}
+    ${inv.customerPan ? `<div style="font-size:11px;">PAN: ${escapeHtml(inv.customerPan)}</div>` : ''}
   `;
   document.getElementById('rec-items-list').innerHTML = inv.items.map(it => `
     <div class="flex-between" style="font-size:13px; padding:4px 0;">
-      <div>${it.name} <span style="color:#94a3b8;">× ${it.qty}</span></div>
+      <div>${escapeHtml(it.name)} <span style="color:#94a3b8;">× ${it.qty}</span></div>
       <div>${money(it.price * it.qty)}</div>
     </div>
   `).join('');
@@ -835,8 +888,8 @@ function renderHistoryListOnly() {
         <div style="display:flex; align-items:center; gap:12px;">
           <input type="checkbox" ${isChecked ? 'checked' : ''} onclick="toggleSelectInvoice('${v.id}', event)" style="width:16px; height:16px; cursor:pointer;" />
           <div>
-            <div style="font-weight:600; font-size:13px;">${v.invoiceNo}</div>
-            <div style="font-size:11px; color:#64748b;">${v.customer || 'Walk-in customer'} · ${v.date}</div>
+            <div style="font-weight:600; font-size:13px;">${escapeHtml(v.invoiceNo)}</div>
+            <div style="font-size:11px; color:#64748b;">${escapeHtml(v.customer || 'Walk-in customer')} · ${escapeHtml(v.date)}</div>
           </div>
         </div>
         <div style="font-weight:600; font-size:13px;">${money(v.total)}</div>
@@ -863,7 +916,7 @@ function openModal(id) {
   if(id === 'modal-products' || id === 'modal-stock') {
     body.innerHTML = inventory.map(i => `
       <div class="flex-between" style="padding:8px 0; border-bottom:1px solid #f1f5f9; font-size:13px;">
-        <div><strong>${i.name}</strong><br/><span style="font-size:11px; color:#64748b;">${money(i.price)}</span></div>
+        <div><strong>${escapeHtml(i.name)}</strong><br/><span style="font-size:11px; color:#64748b;">${money(i.price)}</span></div>
         <div style="font-weight:600;">${i.qty} units</div>
       </div>
     `).join('') || 'No products available.';
@@ -871,7 +924,7 @@ function openModal(id) {
     const totalVal = inventory.reduce((s,i) => s + (i.qty * i.price), 0);
     body.innerHTML = inventory.map(i => `
       <div class="flex-between" style="padding:8px 0; border-bottom:1px solid #f1f5f9; font-size:13px;">
-        <div><strong>${i.name}</strong><br/><span style="font-size:11px; color:#64748b;">${i.qty} × ${money(i.price)}</span></div>
+        <div><strong>${escapeHtml(i.name)}</strong><br/><span style="font-size:11px; color:#64748b;">${i.qty} × ${money(i.price)}</span></div>
         <div style="font-weight:600;">${money(i.qty * i.price)}</div>
       </div>
     `).join('') + `<div class="flex-between" style="font-weight:600; padding-top:10px;"><span>Total</span><span>${money(totalVal)}</span></div>`;
@@ -880,7 +933,7 @@ function openModal(id) {
     const list = invoices.filter(v => v.date === today);
     body.innerHTML = list.map(v => `
       <div class="flex-between" style="padding:8px 0; border-bottom:1px solid #f1f5f9; font-size:13px;">
-        <div><strong>${v.invoiceNo}</strong><br/><span style="font-size:11px; color:#64748b;">${v.customer||'Walk-in'} · ${v.time}</span></div>
+        <div><strong>${escapeHtml(v.invoiceNo)}</strong><br/><span style="font-size:11px; color:#64748b;">${escapeHtml(v.customer||'Walk-in')} · ${escapeHtml(v.time)}</span></div>
         <div style="font-weight:600;">${money(v.total)}</div>
       </div>
     `).join('') || 'No sales recorded today.';
@@ -907,7 +960,7 @@ function openProfitModal(type) {
   document.getElementById('modal-body').innerHTML = rows.map(r => `
     <div style="padding:8px 0; border-bottom:1px solid #f1f5f9; font-size:13px;">
       <div class="flex-between">
-        <strong>${r.name}</strong>
+        <strong>${escapeHtml(r.name)}</strong>
         <span style="font-weight:600; color:${r.profit >= 0 ? '#059669' : '#ef4444'};">${money(r.profit)}</span>
       </div>
       <div class="flex-between" style="font-size:11px; color:#64748b; margin-top:2px;">

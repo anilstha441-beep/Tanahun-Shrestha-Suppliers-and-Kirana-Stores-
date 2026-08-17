@@ -1,37 +1,23 @@
 {
-  "name": "StockLedger — Inventory & Billing",
-  "short_name": "StockLedger",
-  "description": "Inventory management and instant invoicing for Tanahun Shrestha Suppliers and Kirana Stores",
+  "short_name": "POS App",
+  "name": "Inventory & POS Management System",
+  "description": "Offline-first inventory and point of sale manager.",
   "start_url": "./index.html",
-  "scope": "./",
+  "background_color": "#f3f4f6",
+  "theme_color": "#2563eb",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#F5F6F8",
-  "theme_color": "#182233",
+  "orientation": "any",
   "icons": [
     {
       "src": "icon-192.png",
-      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "sizes": "192x192"
     },
     {
       "src": "icon-512.png",
+      "type": "image/png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ]
 }

@@ -10,8 +10,8 @@
 <link rel="apple-touch-icon" href="icon-192.png" />
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-  body { background: #F5F6F8; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; touch-action: pan-y; }
-  .app-container { display: flex; flex-direction: column; min-height: 100vh; }
+  html, body { background: #F5F6F8; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; touch-action: pan-y; }
+  .app-container { display: flex; flex-direction: column; min-height: 100vh; width: 100%; overflow-x: hidden; }
   @media(min-width: 768px) { .app-container { flex-direction: row; } }
   
   /* Navigation */
@@ -28,8 +28,8 @@
   .nav-btn.active { background: rgba(16, 185, 129, 0.15); color: #34d399; }
   .badge { background: #f59e0b; color: #0f172a; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; }
 
-  /* Main Layout & Page Transitions */
-  main { flex: 1; padding: 16px; max-width: 1100px; margin: 0 auto; width: 100%; position: relative; overflow-x: hidden; }
+  /* Main Layout & Tab Transitions */
+  main { flex: 1; padding: 16px; max-width: 1100px; margin: 0 auto; width: 100%; position: relative; overflow-x: hidden; min-width: 0; }
   @media(min-width: 768px) { main { padding: 32px; } }
   .page-title { font-size: 20px; font-weight: 600; margin-bottom: 2px; }
   .page-sub { font-size: 13px; color: #64748b; margin-bottom: 20px; }
@@ -39,13 +39,13 @@
     top: 0;
     left: 0;
     width: 100%;
+    max-width: 100%;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transform: translateX(30px);
-    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
-                opacity 0.3s cubic-bezier(0.25, 1, 0.5, 1),
-                visibility 0.3s ease;
+    transform: none !important;
+    transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+    box-sizing: border-box;
   }
 
   .tab-view.active-view {
@@ -53,11 +53,10 @@
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    transform: translateX(0);
+    transform: none !important;
   }
 
-  .tab-view.slide-left { transform: translateX(-30px); }
-  .tab-view.slide-right { transform: translateX(30px); }
+  .tab-view.slide-left, .tab-view.slide-right { transform: none !important; }
 
   /* UI Cards & Elements */
   .grid-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
@@ -69,7 +68,7 @@
   .stat-lbl { font-size: 12px; color: #64748b; }
   .alert-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 14px; margin-bottom: 20px; color: #b45309; font-size: 13px; }
   
-  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 16px; overflow-x: auto; }
   .btn { background: #10b981; color: #fff; border: none; padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn-outline { background: transparent; border: 1px solid #cbd5e1; color: #475569; }
@@ -91,7 +90,7 @@
   .cart-qty-input:focus { border-color: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
 
   /* Tables & Lists */
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 400px; }
   th { background: #f8fafc; text-align: left; padding: 10px 12px; font-weight: 500; color: #64748b; text-transform: uppercase; font-size: 11px; border-bottom: 1px solid #e2e8f0; }
   td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
   .text-right { text-align: right; }
@@ -109,12 +108,6 @@
     #printable-invoice { position: absolute; left: 0; top: 0; width: 100%; padding: 24px; border: none; box-shadow: none; }
     .no-print { display: none !important; }
   }
-   /* Fix content cropping during transitions */
-  html, body { overflow-x: hidden; }
-  aside { flex-shrink: 0 !important; }
-  main { flex: 1 !important; min-width: 0 !important; overflow: hidden !important; position: relative !important; }
-  .tab-view { width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; }
- 
 </style>
 </head>
 <body>
@@ -204,7 +197,7 @@
         <button class="btn" onclick="openProductModal()">+ Add product</button>
       </div>
       <input type="text" id="inv-search" class="input" placeholder="Search by name or SKU" oninput="renderInventory()" style="max-width:320px;" />
-      <div class="card" style="padding:0; overflow:hidden;">
+      <div class="card" style="padding:0; overflow-x:auto;">
         <table>
           <thead>
             <tr>
@@ -384,28 +377,13 @@ function saveData() {
   render();
 }
 
-function setTab(tab, direction = 'auto') {
-  const currentTab = navTabs.find(t => {
-    const el = document.getElementById('view-' + t);
-    return el && el.classList.contains('active-view');
-  }) || 'dashboard';
-
-  const currentIndex = navTabs.indexOf(currentTab);
-  const targetIndex = navTabs.indexOf(tab);
-
-  let slideClass = 'slide-right';
-  if (direction === 'left' || (direction === 'auto' && targetIndex < currentIndex)) {
-    slideClass = 'slide-left';
-  }
-
+function setTab(tab) {
   navTabs.concat(['receipt']).forEach(t => {
     const viewEl = document.getElementById('view-' + t);
     const btn = document.getElementById('nav-' + t);
 
     if (viewEl) {
       if (t === tab) {
-        viewEl.className = 'tab-view ' + slideClass;
-        void viewEl.offsetWidth;
         viewEl.classList.add('active-view');
       } else {
         viewEl.classList.remove('active-view');
@@ -438,8 +416,8 @@ document.addEventListener('touchend', e => {
     if (!activeTab) return;
     const currentIndex = navTabs.indexOf(activeTab);
 
-    if (diffX < 0 && currentIndex < navTabs.length - 1) setTab(navTabs[currentIndex + 1], 'right');
-    else if (diffX > 0 && currentIndex > 0) setTab(navTabs[currentIndex - 1], 'left');
+    if (diffX < 0 && currentIndex < navTabs.length - 1) setTab(navTabs[currentIndex + 1]);
+    else if (diffX > 0 && currentIndex > 0) setTab(navTabs[currentIndex - 1]);
   }
 }, { passive: true });
 

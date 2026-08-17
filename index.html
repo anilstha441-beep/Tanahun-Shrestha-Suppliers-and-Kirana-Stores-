@@ -14,7 +14,7 @@
   .app-container { display: flex; flex-direction: column; min-height: 100vh; }
   @media(min-width: 768px) { .app-container { flex-direction: row; } }
   
-  /* Sidebar / Header Navigation */
+  /* Navigation */
   aside { background: #182233; color: #e2e8f0; width: 100%; display: flex; flex-direction: column; flex-shrink: 0; z-index: 10; }
   @media(min-width: 768px) { aside { width: 240px; min-height: 100vh; } }
   .brand { padding: 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
@@ -28,21 +28,38 @@
   .nav-btn.active { background: rgba(16, 185, 129, 0.15); color: #34d399; }
   .badge { background: #f59e0b; color: #0f172a; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; }
 
-  /* Main Content Layout & Slide Animation */
-  main { flex: 1; padding: 16px; max-width: 1100px; margin: 0 auto; width: 100%; position: relative; }
+  /* Main Layout & Page Transitions */
+  main { flex: 1; padding: 16px; max-width: 1100px; margin: 0 auto; width: 100%; position: relative; overflow-x: hidden; }
   @media(min-width: 768px) { main { padding: 32px; } }
   .page-title { font-size: 20px; font-weight: 600; margin-bottom: 2px; }
   .page-sub { font-size: 13px; color: #64748b; margin-bottom: 20px; }
   
-  .tab-view { display: none; }
-  .tab-view.active-view { display: block; animation: slideIn 0.22s ease-out forwards; }
-
-  @keyframes slideIn {
-    from { opacity: 0.4; transform: translateX(16px); }
-    to { opacity: 1; transform: translateX(0); }
+  .tab-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateX(30px);
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), 
+                opacity 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+                visibility 0.3s ease;
   }
 
-  /* Cards & Grid */
+  .tab-view.active-view {
+    position: relative;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(0);
+  }
+
+  .tab-view.slide-left { transform: translateX(-30px); }
+  .tab-view.slide-right { transform: translateX(30px); }
+
+  /* UI Cards & Elements */
   .grid-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
   @media(min-width: 1024px) { .grid-stats { grid-template-columns: repeat(4, 1fr); } }
   .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; cursor: pointer; transition: border-color 0.2s; }
@@ -56,13 +73,12 @@
   .btn { background: #10b981; color: #fff; border: none; padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn-outline { background: transparent; border: 1px solid #cbd5e1; color: #475569; }
-  .btn-danger { background: #ef4444; color: #fff; }
   .input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; outline: none; margin-bottom: 10px; }
   .input:focus { border-color: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
   
-  /* Cart Quantity Custom Input */
+  /* Cart Quantity Direct Input */
   .cart-qty-input {
-    width: 42px;
+    width: 44px;
     padding: 2px 4px;
     border: 1px solid #cbd5e1;
     border-radius: 4px;
@@ -72,10 +88,7 @@
     outline: none;
     margin: 0;
   }
-  .cart-qty-input:focus {
-    border-color: #10b981;
-    box-shadow: 0 0 0 2px rgba(16,185,129,0.2);
-  }
+  .cart-qty-input:focus { border-color: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
 
   /* Tables & Lists */
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -89,7 +102,7 @@
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
   .modal { background: #fff; border-radius: 12px; padding: 20px; width: 100%; max-width: 400px; max-height: 85vh; overflow-y: auto; }
   
-  /* Print Styles */
+  /* Print Rules */
   @media print {
     body * { visibility: hidden; }
     #printable-invoice, #printable-invoice * { visibility: visible; }
@@ -106,7 +119,7 @@
       <div class="brand-icon">S</div>
       <div>
         <div class="brand-title">StockLedger</div>
-        <div class="brand-sub" id="save-status">All changes saved</div>
+        <div class="brand-sub">All changes saved</div>
       </div>
     </div>
     <nav>
@@ -118,11 +131,11 @@
     </nav>
   </aside>
 
-  <main id="main-content">
+  <main>
     <!-- DASHBOARD VIEW -->
     <div id="view-dashboard" class="tab-view active-view">
       <div class="page-title">Dashboard</div>
-      <div class="page-sub">Your inventory and sales at a glance.</div>
+      <div class="page-sub">Your inventory and sales metrics at a glance.</div>
       
       <div class="grid-stats">
         <div class="stat-card" onclick="openModal('modal-products')">
@@ -149,12 +162,12 @@
 
       <div class="grid-stats" style="grid-template-columns: repeat(2, 1fr);">
         <div class="stat-card" onclick="openProfitModal('today')">
-          <div class="stat-icon" id="icon-net-today" style="background:#059669;">N</div>
+          <div class="stat-icon" style="background:#059669;">N</div>
           <div class="stat-val" id="stat-today-profit">₹0.00</div>
           <div class="stat-lbl">Today's net profit</div>
         </div>
         <div class="stat-card" onclick="openProfitModal('all')">
-          <div class="stat-icon" id="icon-net-all" style="background:#0d9488;">A</div>
+          <div class="stat-icon" style="background:#0d9488;">A</div>
           <div class="stat-val" id="stat-all-profit">₹0.00</div>
           <div class="stat-lbl">All-time net profit</div>
         </div>
@@ -201,10 +214,10 @@
       </div>
     </div>
 
-    <!-- STOCK ADDED HISTORY VIEW -->
+    <!-- STOCK HISTORY VIEW -->
     <div id="view-stock-history" class="tab-view">
       <div class="page-title">Inventory Added History</div>
-      <div class="page-sub">Every newly added product and stock addition is tracked here.</div>
+      <div class="page-sub">Audit trail for all restocks and newly created products.</div>
       <div class="grid-stats" style="grid-template-columns: repeat(3, 1fr);">
         <div class="stat-card">
           <div class="stat-lbl">Restock Entries</div>
@@ -225,10 +238,10 @@
     <!-- NEW SALE VIEW -->
     <div id="view-sale" class="tab-view">
       <div class="page-title">New Sale</div>
-      <div class="page-sub">Add products to the cart to generate an invoice.</div>
-      <div style="display:grid; grid-template-columns: 1fr; gap:16px;" id="sale-layout">
+      <div class="page-sub">Select products to add to cart and issue bills.</div>
+      <div style="display:grid; grid-template-columns: 1fr; gap:16px;">
         <div>
-          <input type="text" id="sale-search" class="input" placeholder="Search products to add" oninput="renderSaleProducts()" />
+          <input type="text" id="sale-search" class="input" placeholder="Search products..." oninput="renderSaleProducts()" />
           <div id="sale-products-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:10px;"></div>
         </div>
         <div>
@@ -252,7 +265,7 @@
       </div>
     </div>
 
-    <!-- INVOICE RECEIPT VIEW -->
+    <!-- RECEIPT VIEW -->
     <div id="view-receipt" class="tab-view" style="max-width:440px; margin:0 auto;">
       <div class="card" id="printable-invoice">
         <div style="text-align:center; border-bottom:1px solid #f1f5f9; padding-bottom:12px; margin-bottom:12px;">
@@ -283,7 +296,8 @@
     <!-- SALES HISTORY VIEW -->
     <div id="view-history" class="tab-view">
       <div class="page-title">Sales History & Audit</div>
-      <div class="page-sub">Every completed sale is saved here for your records.</div>
+      <div class="page-sub">Select multiple invoices to calculate dynamic totals.</div>
+      
       <div class="grid-stats" style="grid-template-columns: repeat(3, 1fr);">
         <div class="stat-card">
           <div class="stat-lbl">Invoices</div>
@@ -298,12 +312,33 @@
           <div class="stat-val" id="hist-revenue">₹0.00</div>
         </div>
       </div>
-      <div class="card" style="padding:0;" id="history-container"></div>
+
+      <!-- SELECTED SALES SUMMATION BANNER -->
+      <div class="card" id="selected-summary-card" style="background:#f0fdf4; border-color:#bbf7d0; display:none; margin-bottom:16px;">
+        <div class="flex-between" style="margin-bottom:8px;">
+          <span style="font-size:13px; font-weight:600; color:#166534;">Selected Invoices Summary (<span id="sel-count">0</span>)</span>
+          <button onclick="clearSelectedInvoices()" style="background:none; border:none; color:#15803d; font-size:12px; font-weight:600; cursor:pointer;">Clear selection</button>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:13px; color:#14532d;">
+          <div><strong>Units:</strong> <span id="sel-units">0</span></div>
+          <div><strong>Revenue:</strong> <span id="sel-revenue">₹0.00</span></div>
+          <div><strong>Net Profit:</strong> <span id="sel-profit">₹0.00</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div class="flex-between" style="padding:10px 12px; background:#f8fafc; border-bottom:1px solid #e2e8f0;">
+          <label style="font-size:12px; font-weight:600; color:#64748b; display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="checkbox" id="select-all-invoices" onchange="toggleSelectAllInvoices(this.checked)" style="width:16px; height:16px; cursor:pointer;" /> Select All Invoices
+          </label>
+        </div>
+        <div id="history-container"></div>
+      </div>
     </div>
   </main>
 </div>
 
-<!-- MODAL POPUPS -->
+<!-- MODAL SYSTEM -->
 <div id="modal-container" class="modal-overlay" style="display:none;" onclick="closeModal()">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="flex-between" style="margin-bottom:12px;">
@@ -320,10 +355,9 @@ let invoices = [];
 let stockLogs = [];
 let cart = [];
 let editingItemId = null;
-let profitViewType = null;
+let selectedInvoiceIds = new Set();
 
 const navTabs = ['dashboard', 'inventory', 'stock-history', 'sale', 'history'];
-
 const money = n => `₹${Number(n || 0).toFixed(2)}`;
 const todayStr = () => new Date().toISOString().slice(0, 10);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -344,29 +378,41 @@ function saveData() {
   render();
 }
 
-function setTab(tab) {
-  ['dashboard','inventory','stock-history','sale','history','receipt'].forEach(t => {
+function setTab(tab, direction = 'auto') {
+  const currentTab = navTabs.find(t => {
+    const el = document.getElementById('view-' + t);
+    return el && el.classList.contains('active-view');
+  }) || 'dashboard';
+
+  const currentIndex = navTabs.indexOf(currentTab);
+  const targetIndex = navTabs.indexOf(tab);
+
+  let slideClass = 'slide-right';
+  if (direction === 'left' || (direction === 'auto' && targetIndex < currentIndex)) {
+    slideClass = 'slide-left';
+  }
+
+  navTabs.concat(['receipt']).forEach(t => {
     const viewEl = document.getElementById('view-' + t);
     const btn = document.getElementById('nav-' + t);
-    
+
     if (viewEl) {
       if (t === tab) {
+        viewEl.className = 'tab-view ' + slideClass;
+        void viewEl.offsetWidth;
         viewEl.classList.add('active-view');
       } else {
         viewEl.classList.remove('active-view');
       }
     }
-    if(btn) btn.classList.toggle('active', t === tab);
+    if (btn) btn.classList.toggle('active', t === tab);
   });
+
   render();
 }
 
-/* Touch Gesture Handler for Horizontal Swiping */
-let touchStartX = 0;
-let touchStartY = 0;
-let touchEndX = 0;
-let touchEndY = 0;
-
+/* Touch Gesture Setup */
+let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0;
 document.addEventListener('touchstart', e => {
   touchStartX = e.changedTouches[0].screenX;
   touchStartY = e.changedTouches[0].screenY;
@@ -375,32 +421,21 @@ document.addEventListener('touchstart', e => {
 document.addEventListener('touchend', e => {
   touchEndX = e.changedTouches[0].screenX;
   touchEndY = e.changedTouches[0].screenY;
-  handleSwipeGesture();
-}, { passive: true });
-
-function handleSwipeGesture() {
   const modal = document.getElementById('modal-container');
   if (modal && modal.style.display !== 'none') return;
 
   const diffX = touchEndX - touchStartX;
   const diffY = touchEndY - touchStartY;
 
-  if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 55) {
-    const activeTab = navTabs.find(t => {
-      const el = document.getElementById('view-' + t);
-      return el && el.classList.contains('active-view');
-    });
-
+  if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 45) {
+    const activeTab = navTabs.find(t => document.getElementById('view-' + t)?.classList.contains('active-view'));
     if (!activeTab) return;
     const currentIndex = navTabs.indexOf(activeTab);
 
-    if (diffX < 0 && currentIndex < navTabs.length - 1) {
-      setTab(navTabs[currentIndex + 1]);
-    } else if (diffX > 0 && currentIndex > 0) {
-      setTab(navTabs[currentIndex - 1]);
-    }
+    if (diffX < 0 && currentIndex < navTabs.length - 1) setTab(navTabs[currentIndex + 1], 'right');
+    else if (diffX > 0 && currentIndex > 0) setTab(navTabs[currentIndex - 1], 'left');
   }
-}
+}, { passive: true });
 
 function render() {
   const lowStock = inventory.filter(i => Number(i.qty) <= Number(i.lowStockAt ?? 5));
@@ -413,7 +448,6 @@ function render() {
   const todaysProfit = todaysInvoices.reduce((s,v) => s + (v.profit || 0), 0);
   const allTimeProfit = invoices.reduce((s,v) => s + (v.profit || 0), 0);
 
-  // Stats Dashboard
   document.getElementById('stat-prod-count').innerText = inventory.length;
   document.getElementById('stat-unit-count').innerText = totalUnits;
   document.getElementById('stat-stock-val').innerText = money(totalStockVal);
@@ -421,7 +455,6 @@ function render() {
   document.getElementById('stat-today-profit').innerText = money(todaysProfit);
   document.getElementById('stat-all-profit').innerText = money(allTimeProfit);
   
-  // Badges & Low Stock Alerts
   const badge = document.getElementById('low-count-badge');
   if(lowStock.length > 0) {
     badge.style.display = 'inline-block';
@@ -433,7 +466,6 @@ function render() {
     document.getElementById('low-stock-alert').style.display = 'none';
   }
 
-  // Recent Sales Dashboard
   const recentList = document.getElementById('recent-sales-list');
   if(invoices.length === 0) {
     recentList.innerHTML = '<div style="text-align:center; font-size:12px; color:#94a3b8; padding:16px;">No sales recorded yet.</div>';
@@ -514,9 +546,9 @@ function openProductModal(item = null) {
   document.getElementById('modal-title').innerText = item ? 'Edit product' : 'Add product';
   document.getElementById('modal-body').innerHTML = `
     <label style="font-size:11px; color:#64748b;">Product name</label>
-    <input type="text" id="m-name" class="input" value="${item ? item.name : ''}" placeholder="e.g. Blue T-Shirt (M)" />
+    <input type="text" id="m-name" class="input" value="${item ? item.name : ''}" placeholder="e.g. Basmati Rice 5kg" />
     <label style="font-size:11px; color:#64748b;">SKU (optional)</label>
-    <input type="text" id="m-sku" class="input" value="${item ? (item.sku||'') : ''}" placeholder="e.g. TSH-001" />
+    <input type="text" id="m-sku" class="input" value="${item ? (item.sku||'') : ''}" placeholder="e.g. RICE-01" />
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
       <div>
         <label style="font-size:11px; color:#64748b;">Cost price</label>
@@ -529,7 +561,7 @@ function openProductModal(item = null) {
     </div>
     <label style="font-size:11px; color:#64748b;">${item ? 'Quantity (Set Total)' : 'Initial Quantity'}</label>
     <input type="number" id="m-qty" class="input" value="${item ? item.qty : ''}" placeholder="0" />
-    <label style="font-size:11px; color:#64748b;">Low stock alert at</label>
+    <label style="font-size:11px; color:#64748b;">Low stock alert threshold</label>
     <input type="number" id="m-low" class="input" value="${item ? (item.lowStockAt??5) : 5}" />
     <button class="btn" style="width:100%; margin-top:8px;" onclick="saveProductModal()">Save product</button>
   `;
@@ -555,14 +587,10 @@ function saveProductModal() {
   if(editingItemId) {
     const existing = inventory.find(i => i.id === editingItemId);
     const diff = qty - (existing ? Number(existing.qty) : 0);
-    if(diff > 0) {
-      recordStockLog(newItem, diff, 'Stock Restock');
-    }
+    if(diff > 0) recordStockLog(newItem, diff, 'Stock Restock');
     inventory = inventory.map(i => i.id === editingItemId ? newItem : i);
   } else {
-    if(qty > 0) {
-      recordStockLog(newItem, qty, 'New Product Initial Stock');
-    }
+    if(qty > 0) recordStockLog(newItem, qty, 'New Product Initial Stock');
     inventory.unshift(newItem);
   }
   closeModal();
@@ -579,7 +607,7 @@ function renderStockHistory() {
   document.getElementById('stock-hist-cost').innerText = money(totalCostVal);
 
   if(stockLogs.length === 0) {
-    container.innerHTML = '<div style="text-align:center; font-size:12px; color:#94a3b8; padding:20px;">No inventory addition history yet.</div>';
+    container.innerHTML = '<div style="text-align:center; font-size:12px; color:#94a3b8; padding:20px;">No stock addition history recorded.</div>';
     return;
   }
 
@@ -603,7 +631,7 @@ function renderSaleProducts() {
   const grid = document.getElementById('sale-products-grid');
   
   if(available.length === 0) {
-    grid.innerHTML = '<div style="color:#94a3b8; font-size:13px; grid-column:1/-1;">No matching in-stock products.</div>';
+    grid.innerHTML = '<div style="color:#94a3b8; font-size:13px; grid-column:1/-1;">No available items.</div>';
     return;
   }
   grid.innerHTML = available.map(p => `
@@ -643,14 +671,11 @@ function updateCartQty(id, delta) {
 function setCartQtyDirect(id, newQtyVal) {
   const parsedVal = parseInt(newQtyVal, 10);
   const stock = inventory.find(i => i.id === id)?.qty || 0;
-  
   if(isNaN(parsedVal) || parsedVal <= 0) {
     cart = cart.filter(c => c.id !== id);
   } else {
     const item = cart.find(c => c.id === id);
-    if(item) {
-      item.qty = Math.min(parsedVal, stock);
-    }
+    if(item) item.qty = Math.min(parsedVal, stock);
   }
   renderCart();
 }
@@ -701,19 +726,14 @@ function completeSale() {
   const invoiceNo = `INV-${String(invoices.length + 1).padStart(4, '0')}`;
   const total = cart.reduce((s,c) => s + (c.price * c.qty), 0);
   const profit = cart.reduce((s,c) => s + ((c.price - (c.costPrice||0)) * c.qty), 0);
-  
-  const custName = document.getElementById('cust-name').value.trim();
-  const custAddr = document.getElementById('cust-addr').value.trim();
-  const custPhone = document.getElementById('cust-phone').value.trim();
-  const custPan = document.getElementById('cust-pan').value.trim();
 
   const invoice = {
     id: uid(),
     invoiceNo,
-    customer: custName,
-    customerAddress: custAddr,
-    customerContact: custPhone,
-    customerPan: custPan,
+    customer: document.getElementById('cust-name').value.trim(),
+    customerAddress: document.getElementById('cust-addr').value.trim(),
+    customerContact: document.getElementById('cust-phone').value.trim(),
+    customerPan: document.getElementById('cust-pan').value.trim(),
     date: todayStr(),
     time: new Date().toLocaleTimeString(),
     items: [...cart],
@@ -721,7 +741,6 @@ function completeSale() {
     profit
   };
 
-  // Update Inventory Stock
   inventory = inventory.map(i => {
     const sold = cart.find(c => c.id === i.id);
     return sold ? { ...i, qty: i.qty - sold.qty } : i;
@@ -730,7 +749,6 @@ function completeSale() {
   invoices.unshift(invoice);
   saveData();
 
-  // Reset Cart
   cart = [];
   document.getElementById('cust-name').value = '';
   document.getElementById('cust-addr').value = '';
@@ -738,7 +756,6 @@ function completeSale() {
   document.getElementById('cust-pan').value = '';
   renderCart();
 
-  // Show Printable Receipt
   showReceipt(invoice);
 }
 
@@ -761,29 +778,82 @@ function showReceipt(inv) {
   setTab('receipt');
 }
 
-function renderHistory() {
-  const container = document.getElementById('history-container');
-  const totalRev = invoices.reduce((s,v) => s + v.total, 0);
-  const totalUnits = invoices.reduce((s,v) => s + v.items.reduce((a,i) => a + i.qty, 0), 0);
+/* Multi-Selectable Sales Engine */
+function toggleSelectInvoice(id, event) {
+  event.stopPropagation();
+  if(selectedInvoiceIds.has(id)) selectedInvoiceIds.delete(id);
+  else selectedInvoiceIds.add(id);
+  updateSelectedSummary();
+  renderHistoryListOnly();
+}
 
-  document.getElementById('hist-count').innerText = invoices.length;
-  document.getElementById('hist-units').innerText = totalUnits;
-  document.getElementById('hist-revenue').innerText = money(totalRev);
+function toggleSelectAllInvoices(checked) {
+  if(checked) invoices.forEach(v => selectedInvoiceIds.add(v.id));
+  else selectedInvoiceIds.clear();
+  updateSelectedSummary();
+  renderHistoryListOnly();
+}
 
-  if(invoices.length === 0) {
-    container.innerHTML = '<div style="text-align:center; font-size:12px; color:#94a3b8; padding:20px;">No sales history yet.</div>';
+function clearSelectedInvoices() {
+  selectedInvoiceIds.clear();
+  const cb = document.getElementById('select-all-invoices');
+  if(cb) cb.checked = false;
+  updateSelectedSummary();
+  renderHistoryListOnly();
+}
+
+function updateSelectedSummary() {
+  const card = document.getElementById('selected-summary-card');
+  const selectAllCb = document.getElementById('select-all-invoices');
+
+  if(selectedInvoiceIds.size === 0) {
+    card.style.display = 'none';
+    if(selectAllCb) selectAllCb.checked = false;
     return;
   }
 
-  container.innerHTML = invoices.map(v => `
-    <div class="flex-between" style="padding:12px; border-bottom:1px solid #f1f5f9; cursor:pointer;" onclick="showReceiptDetails('${v.id}')">
-      <div>
-        <div style="font-weight:600; font-size:13px;">${v.invoiceNo}</div>
-        <div style="font-size:11px; color:#64748b;">${v.customer || 'Walk-in customer'} · ${v.date}</div>
+  card.style.display = 'block';
+  const selected = invoices.filter(v => selectedInvoiceIds.has(v.id));
+  
+  document.getElementById('sel-count').innerText = selected.length;
+  document.getElementById('sel-units').innerText = selected.reduce((s, v) => s + v.items.reduce((a, i) => a + i.qty, 0), 0);
+  document.getElementById('sel-revenue').innerText = money(selected.reduce((s, v) => s + v.total, 0));
+  document.getElementById('sel-profit').innerText = money(selected.reduce((s, v) => s + (v.profit || 0), 0));
+
+  if(selectAllCb) selectAllCb.checked = invoices.length > 0 && selectedInvoiceIds.size === invoices.length;
+}
+
+function renderHistory() {
+  document.getElementById('hist-count').innerText = invoices.length;
+  document.getElementById('hist-units').innerText = invoices.reduce((s,v) => s + v.items.reduce((a,i) => a + i.qty, 0), 0);
+  document.getElementById('hist-revenue').innerText = money(invoices.reduce((s,v) => s + v.total, 0));
+
+  updateSelectedSummary();
+  renderHistoryListOnly();
+}
+
+function renderHistoryListOnly() {
+  const container = document.getElementById('history-container');
+  if(invoices.length === 0) {
+    container.innerHTML = '<div style="text-align:center; font-size:12px; color:#94a3b8; padding:20px;">No sales history available.</div>';
+    return;
+  }
+
+  container.innerHTML = invoices.map(v => {
+    const isChecked = selectedInvoiceIds.has(v.id);
+    return `
+      <div class="flex-between" style="padding:12px; border-bottom:1px solid #f1f5f9; background:${isChecked ? '#f0fdf4' : '#fff'}; cursor:pointer;" onclick="showReceiptDetails('${v.id}')">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <input type="checkbox" ${isChecked ? 'checked' : ''} onclick="toggleSelectInvoice('${v.id}', event)" style="width:16px; height:16px; cursor:pointer;" />
+          <div>
+            <div style="font-weight:600; font-size:13px;">${v.invoiceNo}</div>
+            <div style="font-size:11px; color:#64748b;">${v.customer || 'Walk-in customer'} · ${v.date}</div>
+          </div>
+        </div>
+        <div style="font-weight:600; font-size:13px;">${money(v.total)}</div>
       </div>
-      <div style="font-weight:600; font-size:13px;">${money(v.total)}</div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function showReceiptDetails(id) {
@@ -864,7 +934,6 @@ function closeModal() {
   document.getElementById('modal-container').style.display = 'none';
 }
 
-// Service Worker Registration
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("sw.js").catch(() => {});

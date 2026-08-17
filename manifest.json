@@ -1,20 +1,37 @@
 {
-  "name": "StockLedger FMCG",
+  "name": "StockLedger — Inventory & Billing",
   "short_name": "StockLedger",
+  "description": "Inventory management and instant invoicing for Tanahun Shrestha Suppliers and Kirana Stores",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#1e293b",
-  "theme_color": "#1e293b",
+  "orientation": "portrait",
+  "background_color": "#F5F6F8",
+  "theme_color": "#182233",
   "icons": [
     {
       "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

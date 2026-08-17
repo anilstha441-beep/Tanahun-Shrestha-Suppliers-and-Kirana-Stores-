@@ -2,29 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Tanahun Shrestha Suppliers and Kirana Stores - StockLedger</title>
-  
+
   <style>
     /* ==========================================================================
-       1. GLOBAL RESET & DESIGN SYSTEM
+       1. SCREEN RATIO & SLIDE SYSTEM RESET
        ========================================================================== */
     :root {
       --primary: #2563eb;
-      --primary-hover: #1d4ed8;
       --bg-main: #f8fafc;
       --bg-surface: #ffffff;
       --bg-sidebar: #0f172a;
       --text-main: #0f172a;
       --text-muted: #64748b;
-      --text-on-dark: #f8fafc;
       --border-color: #e2e8f0;
-      --warning-bg: #fffbebf1;
-      --warning-border: #fde68a;
-      --warning-text: #b45309;
-      --sidebar-width: 260px;
-      --header-height: 60px;
-      --radius: 8px;
+      --sidebar-width: 250px;
+      --header-height: 56px;
     }
 
     *, *::before, *::after {
@@ -36,66 +30,23 @@
     html, body {
       width: 100%;
       height: 100%;
-      max-width: 100vw;
-      overflow-x: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      overflow: hidden; /* Lock root page scroll to enforce slide layout ratio */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: var(--bg-main);
       color: var(--text-main);
-      line-height: 1.5;
-    }
-
-    img, svg {
-      max-width: 100%;
-      height: auto;
-      display: block;
-    }
-
-    button, input, select {
-      font: inherit;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      padding: 0.5rem 1rem;
-      border-radius: var(--radius);
-      border: 1px solid transparent;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn-primary {
-      background-color: var(--primary);
-      color: #ffffff;
-    }
-
-    .btn-primary:hover {
-      background-color: var(--primary-hover);
-    }
-
-    .btn-outline {
-      background: transparent;
-      border-color: var(--border-color);
-      color: var(--text-main);
-    }
-
-    .btn-outline:hover {
-      background: var(--bg-main);
     }
 
     /* ==========================================================================
-       2. RESPONSIVE APP LAYOUT & SIDEBAR
+       2. APP LAYOUT & MOBILE HEADER
        ========================================================================== */
-    .app-layout {
+    .app-viewport {
       display: flex;
-      min-height: 100vh;
-      width: 100%;
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      overflow: hidden;
     }
 
-    /* Mobile Navigation Bar */
     .mobile-header {
       display: none;
       position: fixed;
@@ -103,35 +54,36 @@
       left: 0;
       right: 0;
       height: var(--header-height);
-      background-color: var(--bg-sidebar);
-      color: var(--text-on-dark);
+      background: var(--bg-sidebar);
+      color: #ffffff;
       align-items: center;
       justify-content: space-between;
       padding: 0 1rem;
       z-index: 100;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    .mobile-toggle {
+    .menu-btn {
       background: none;
       border: none;
-      color: var(--text-on-dark);
+      color: #fff;
       font-size: 1.5rem;
       cursor: pointer;
     }
 
+    /* Sidebar Navigation */
     aside.sidebar {
       width: var(--sidebar-width);
+      height: 100%;
       background-color: var(--bg-sidebar);
-      color: var(--text-on-dark);
+      color: #ffffff;
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
-      transition: transform 0.3s ease;
       z-index: 90;
+      transition: transform 0.3s ease;
     }
 
-    .brand-section {
+    .brand {
       padding: 1.25rem 1rem;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       display: flex;
@@ -139,256 +91,152 @@
       gap: 0.75rem;
     }
 
-    .brand-logo {
-      width: 36px;
-      height: 36px;
-      background-color: var(--primary);
-      border-radius: var(--radius);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--primary);
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
       font-weight: bold;
-      color: white;
     }
 
-    nav.nav-menu {
-      padding: 1rem 0;
+    nav.slide-nav {
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      padding: 1rem 0;
     }
 
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
+    .slide-link {
       padding: 0.75rem 1.25rem;
-      color: #cbd5e1;
+      color: #94a3b8;
       text-decoration: none;
       font-size: 0.9rem;
       border-left: 3px solid transparent;
-      transition: all 0.2s;
       cursor: pointer;
+      transition: all 0.2s;
     }
 
-    .nav-item:hover, .nav-item.active {
-      background-color: rgba(255, 255, 255, 0.05);
+    .slide-link.active, .slide-link:hover {
       color: #ffffff;
+      background: rgba(255,255,255,0.05);
       border-left-color: var(--primary);
     }
 
-    main.main-content {
+    /* ==========================================================================
+       3. SLIDE VIEWPORT & HORIZONTAL SLIDER ENGINE
+       ========================================================================== */
+    .slide-viewport {
       flex: 1;
-      width: calc(100% - var(--sidebar-width));
-      max-width: 100%;
-      padding: 1.5rem;
-      overflow-y: auto;
+      height: 100%;
+      width: calc(100vw - var(--sidebar-width));
+      overflow: hidden;
+      position: relative;
     }
 
-    .page-header {
-      margin-bottom: 1.5rem;
+    /* Horizontal Track for Slides */
+    .slide-track {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      flex-wrap: wrap;
-      gap: 1rem;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
     }
 
-    .page-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-    }
-
-    .page-description {
-      font-size: 0.875rem;
-      color: var(--text-muted);
-    }
-
-    .sidebar-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 80;
-    }
-
-    /* Page Visibility Controller */
-    .page-section {
-      display: none;
-    }
-
-    .page-section.active {
-      display: block;
+    /* Individual Slide View */
+    .slide-view {
+      flex: 0 0 100%;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto; /* Internal slide scroll only */
+      padding: 1.5rem;
+      box-sizing: border-box;
     }
 
     /* ==========================================================================
-       3. CARDS & GRID LAYOUTS
+       4. CONTENT CARDS, GRIDS & TABLES
        ========================================================================== */
-    .grid {
-      display: grid;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
+    .page-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
     }
 
-    .grid-4 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
-    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-    .pos-grid { grid-template-columns: 1fr 340px; }
+    .page-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
 
     .card {
       background: var(--bg-surface);
       border: 1px solid var(--border-color);
-      border-radius: var(--radius);
-      padding: 1.25rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      border-radius: 8px;
+      padding: 1rem;
     }
 
-    .stat-card {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .stat-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      background: #eff6ff;
-      color: var(--primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      flex-shrink: 0;
-    }
-
-    .stat-value {
+    .stat-val {
       font-size: 1.25rem;
       font-weight: 700;
     }
 
-    .stat-label {
-      font-size: 0.8rem;
+    .stat-lbl {
+      font-size: 0.75rem;
       color: var(--text-muted);
     }
 
-    .alert-card {
-      background-color: var(--warning-bg);
-      border: 1px solid var(--warning-border);
-      color: var(--warning-text);
-      padding: 1rem;
-      border-radius: var(--radius);
-      margin-bottom: 1.5rem;
-    }
-
-    /* ==========================================================================
-       4. SCROLLABLE TABLES & POS COMPONENT
-       ========================================================================== */
-    .table-wrapper {
+    /* Responsive Table Container (scrolls within slide) */
+    .table-container {
       width: 100%;
       overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
       border: 1px solid var(--border-color);
-      border-radius: var(--radius);
+      border-radius: 8px;
       background: var(--bg-surface);
+      margin-top: 1rem;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      text-align: left;
-      font-size: 0.9rem;
+      font-size: 0.875rem;
       white-space: nowrap;
     }
 
     th, td {
       padding: 0.75rem 1rem;
       border-bottom: 1px solid var(--border-color);
+      text-align: left;
     }
 
     th {
-      background-color: #f8fafc;
-      font-weight: 600;
+      background: #f1f5f9;
       color: var(--text-muted);
     }
 
-    tbody tr:last-child td {
-      border-bottom: none;
-    }
-
-    /* POS Cart Panel */
-    .cart-panel {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius);
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      height: fit-content;
-    }
-
-    .cart-items {
-      min-height: 180px;
-      max-height: 350px;
-      overflow-y: auto;
-      margin: 1rem 0;
-      border-top: 1px solid var(--border-color);
-      border-bottom: 1px solid var(--border-color);
-      padding: 0.5rem 0;
-    }
-
-    /* Search Input Wrapper */
-    .search-bar {
-      width: 100%;
-      max-width: 400px;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius);
-      outline: none;
-      margin-bottom: 1rem;
-    }
-
-    .search-bar:focus {
-      border-color: var(--primary);
-    }
-
-    /* ==========================================================================
-       5. MODAL / INVOICE DIALOG
-       ========================================================================== */
-    .modal-backdrop {
+    .overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.6);
-      z-index: 200;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-    }
-
-    .modal-backdrop.active {
-      display: flex;
-    }
-
-    .invoice-dialog {
-      background: var(--bg-surface);
-      border-radius: var(--radius);
-      max-width: 600px;
-      width: 100%;
-      padding: 1.5rem;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-      position: relative;
+      background: rgba(0,0,0,0.5);
+      z-index: 80;
     }
 
     /* ==========================================================================
-       6. MEDIA QUERIES FOR MOBILE AND TABLETS
+       5. MOBILE BREAKPOINTS
        ========================================================================== */
-    @media (max-width: 900px) {
-      .pos-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
     @media (max-width: 768px) {
       .mobile-header { display: flex; }
 
@@ -401,415 +249,203 @@
       }
 
       aside.sidebar.active { transform: translateX(0); }
-      .sidebar-overlay.active { display: block; }
+      .overlay.active { display: block; }
 
-      main.main-content {
-        width: 100%;
-        padding: 1rem;
-        margin-top: var(--header-height);
+      .slide-viewport {
+        width: 100vw;
+        padding-top: var(--header-height);
       }
 
-      .grid-4, .grid-3, .grid-2 {
-        grid-template-columns: 1fr;
+      .slide-view {
+        padding: 1rem;
       }
     }
   </style>
 </head>
 <body>
 
-  <div class="app-layout">
-    
-    <!-- Mobile Header Navigation -->
+  <div class="app-viewport">
+
     <header class="mobile-header">
       <div style="display:flex; align-items:center; gap:0.5rem;">
-        <button class="mobile-toggle" id="sidebarToggle">☰</button>
+        <button class="menu-btn" id="menuBtn">☰</button>
         <span style="font-weight:bold;">StockLedger</span>
       </div>
       <span style="font-size:0.75rem; color:#94a3b8;">TSS&KS</span>
     </header>
 
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="overlay" id="overlay"></div>
 
-    <!-- App Sidebar -->
     <aside class="sidebar" id="sidebar">
-      <div class="brand-section">
-        <div class="brand-logo">S</div>
+      <div class="brand">
+        <div class="brand-icon">S</div>
         <div>
-          <div style="font-weight:700; font-size:1rem;">StockLedger</div>
-          <div style="font-size:0.75rem; color:#94a3b8;">All changes saved</div>
+          <div style="font-weight:bold; font-size:0.95rem;">StockLedger</div>
+          <div style="font-size:0.7rem; color:#94a3b8;">All changes saved</div>
         </div>
       </div>
-      <nav class="nav-menu">
-        <div class="nav-item active" data-target="dashboard">Dashboard</div>
-        <div class="nav-item" data-target="inventory">Inventory Tracker</div>
-        <div class="nav-item" data-target="restock-history">Restock History</div>
-        <div class="nav-item" data-target="new-sale">New Sale (POS)</div>
-        <div class="nav-item" data-target="sales-audit">Sales History & Audit</div>
+      <nav class="slide-nav">
+        <a class="slide-link active" onclick="goToSlide(0)">Dashboard</a>
+        <a class="slide-link" onclick="goToSlide(1)">Inventory Tracker</a>
+        <a class="slide-link" onclick="goToSlide(2)">Restock History</a>
+        <a class="slide-link" onclick="goToSlide(3)">New Sale (POS)</a>
+        <a class="slide-link" onclick="goToSlide(4)">Sales History & Audit</a>
       </nav>
     </aside>
 
-    <!-- Main Content Area -->
-    <main class="main-content">
+    <div class="slide-viewport">
+      <div class="slide-track" id="slideTrack">
 
-      <!-- INTERFACE 1: DASHBOARD -->
-      <section id="dashboard" class="page-section active">
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">Dashboard</h1>
-            <p class="page-description">Your inventory and sales metrics at a glance.</p>
+        <!-- SLIDE 1: DASHBOARD -->
+        <div class="slide-view">
+          <div class="page-title">Dashboard</div>
+          <div class="page-desc">Your inventory and sales metrics at a glance.</div>
+
+          <div class="grid-4">
+            <div class="card"><div class="stat-val">0</div><div class="stat-lbl">Products</div></div>
+            <div class="card"><div class="stat-val">0</div><div class="stat-lbl">Units in stock</div></div>
+            <div class="card"><div class="stat-val">₹0.00</div><div class="stat-lbl">Stock value</div></div>
+            <div class="card"><div class="stat-val">₹0.00</div><div class="stat-lbl">Today's sales</div></div>
+          </div>
+
+          <div class="grid-2">
+            <div class="card"><div class="stat-val">₹0.00</div><div class="stat-lbl">Today's net profit</div></div>
+            <div class="card"><div class="stat-val">₹0.00</div><div class="stat-lbl">All-time net profit</div></div>
+          </div>
+
+          <div class="card" style="background:#fffbe0; border-color:#fde68a; color:#b45309;">
+            <strong>⚠️ Low stock warning</strong>
+            <div style="font-size:0.8rem; margin-top:0.25rem;">No items currently low on stock.</div>
           </div>
         </div>
 
-        <div class="grid grid-4">
-          <div class="card stat-card">
-            <div class="stat-icon">P</div>
-            <div>
-              <div class="stat-value">0</div>
-              <div class="stat-label">Products</div>
-            </div>
-          </div>
-          <div class="card stat-card">
-            <div class="stat-icon">U</div>
-            <div>
-              <div class="stat-value">0</div>
-              <div class="stat-label">Units in stock</div>
-            </div>
-          </div>
-          <div class="card stat-card">
-            <div class="stat-icon">V</div>
-            <div>
-              <div class="stat-value">₹0.00</div>
-              <div class="stat-label">Stock value</div>
-            </div>
-          </div>
-          <div class="card stat-card">
-            <div class="stat-icon">S</div>
-            <div>
-              <div class="stat-value">₹0.00</div>
-              <div class="stat-label">Today's sales</div>
-            </div>
-          </div>
-        </div>
+        <!-- SLIDE 2: INVENTORY -->
+        <div class="slide-view">
+          <div class="page-title">Inventory</div>
+          <div class="page-desc">0 products tracked</div>
 
-        <div class="grid grid-2">
-          <div class="card stat-card">
-            <div class="stat-icon">N</div>
-            <div>
-              <div class="stat-value">₹0.00</div>
-              <div class="stat-label">Today's net profit</div>
-            </div>
-          </div>
-          <div class="card stat-card">
-            <div class="stat-icon">A</div>
-            <div>
-              <div class="stat-value">₹0.00</div>
-              <div class="stat-label">All-time net profit</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="alert-card">
-          <strong>⚠️ Low stock warning</strong>
-          <p style="font-size:0.85rem; margin-top:0.25rem;">All stocked items are currently at healthy operational levels.</p>
-        </div>
-
-        <div class="card">
-          <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:0.75rem;">Recent sales</h3>
-          <div class="table-wrapper">
+          <div class="table-container">
             <table>
               <thead>
-                <tr><th>Invoice ID</th><th>Date</th><th>Items</th><th>Total Amount</th></tr>
+                <tr><th>Product</th><th>SKU</th><th>Price</th><th>Stock</th><th>Actions</th></tr>
               </thead>
               <tbody>
-                <tr><td colspan="4" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">No recent transactions recorded today.</td></tr>
+                <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No products tracked yet.</td></tr>
               </tbody>
             </table>
           </div>
         </div>
-      </section>
 
+        <!-- SLIDE 3: RESTOCK HISTORY -->
+        <div class="slide-view">
+          <div class="page-title">Inventory Added History</div>
+          <div class="page-desc">Audit trail for all restocks and newly created products.</div>
 
-      <!-- INTERFACE 2: INVENTORY TRACKER -->
-      <section id="inventory" class="page-section">
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">Inventory</h1>
-            <p class="page-description">0 products tracked</p>
+          <div class="grid-4">
+            <div class="card"><div class="stat-val">0</div><div class="stat-lbl">Restock Entries</div></div>
+            <div class="card"><div class="stat-val">0</div><div class="stat-lbl">Units Added</div></div>
+            <div class="card"><div class="stat-val">₹0.00</div><div class="stat-lbl">Added Cost Value</div></div>
           </div>
-          <button class="btn btn-primary">+ Add Product</button>
-        </div>
 
-        <input type="text" class="search-bar" placeholder="Search products by name or SKU..." />
-
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>SKU</th>
-                <th>Price</th>
-                <th>Stock</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td colspan="5" style="text-align:center; color: var(--text-muted); padding: 2rem;">
-                  No products added yet. Click "+ Add Product" to build your inventory catalog.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-
-      <!-- INTERFACE 3: RESTOCK HISTORY -->
-      <section id="restock-history" class="page-section">
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">Inventory Added History</h1>
-            <p class="page-description">Audit trail for all restocks and newly created products.</p>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr><th>Date & Time</th><th>Product</th><th>Quantity</th><th>Unit Cost</th><th>Total</th></tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No restock entries found.</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <div class="grid grid-3">
-          <div class="card stat-card">
-            <div class="stat-icon">R</div>
-            <div>
-              <div class="stat-value">0</div>
-              <div class="stat-label">Restock Entries</div>
+        <!-- SLIDE 4: NEW SALE -->
+        <div class="slide-view">
+          <div class="page-title">New Sale</div>
+          <div class="page-desc">Select products to add to cart and issue bills.</div>
+
+          <div class="grid-2">
+            <div class="card" style="text-align:center; padding: 2rem 1rem; color: var(--text-muted);">
+              No products available to sell.
             </div>
-          </div>
-          <div class="card stat-card">
-            <div class="stat-icon">U</div>
-            <div>
-              <div class="stat-value">0</div>
-              <div class="stat-label">Units Added</div>
-            </div>
-          </div>
-          <div class="card stat-card">
-            <div class="stat-icon">C</div>
-            <div>
-              <div class="stat-value">₹0.00</div>
-              <div class="stat-label">Added Cost Value</div>
+            <div class="card">
+              <h3>Cart</h3>
+              <div style="padding: 2rem 0; text-align:center; color: var(--text-muted); border-bottom: 1px solid var(--border-color); margin-bottom: 1rem;">
+                Cart is empty
+              </div>
+              <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:1rem;">
+                <span>Total</span>
+                <span>₹0.00</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>Date & Time</th>
-                <th>Product</th>
-                <th>Quantity Added</th>
-                <th>Unit Cost</th>
-                <th>Total Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td colspan="5" style="text-align:center; color: var(--text-muted); padding: 2rem;">
-                  No restock records found in history.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+        <!-- SLIDE 5: SALES AUDIT -->
+        <div class="slide-view">
+          <div class="page-title">Sales History & Audit</div>
+          <div class="page-desc">Select multiple invoices to calculate dynamic totals.</div>
 
+          <div class="grid-4">
+            <div class="card"><div class="stat-val">0</div><div class="stat-lbl">Invoices</div></div>
+            <div class="card"><div class="stat-val">0</div><div class="stat-lbl">Units Sold</div></div>
+            <div class="card"><div class="stat-val">₹0.00</div><div class="stat-lbl">Revenue</div></div>
+          </div>
 
-      <!-- INTERFACE 4: NEW SALE (POS) -->
-      <section id="new-sale" class="page-section">
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">New Sale</h1>
-            <p class="page-description">Select products to add to cart and issue bills.</p>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr><th>Invoice #</th><th>Date</th><th>Items</th><th>Revenue</th><th>Profit</th></tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No sales invoices recorded.</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <div class="grid pos-grid">
-          <div>
-            <input type="text" class="search-bar" placeholder="Search product to sell..." />
-            <div class="card" style="text-align:center; color: var(--text-muted); padding: 3rem 1rem;">
-              No products available to select. Please populate your Inventory first.
-            </div>
-          </div>
-
-          <div class="cart-panel">
-            <h3 style="font-size:1.1rem; font-weight:600;">Cart</h3>
-            <div class="cart-items">
-              <p style="text-align:center; color: var(--text-muted); padding-top: 2rem;">Cart is empty</p>
-            </div>
-            
-            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:1.1rem; margin-bottom:1rem;">
-              <span>Total</span>
-              <span>₹0.00</span>
-            </div>
-
-            <button class="btn btn-primary" style="width:100%;" id="openInvoiceBtn">Issue Bill & Print</button>
-          </div>
-        </div>
-      </section>
-
-
-      <!-- INTERFACE 5: SALES HISTORY & AUDIT -->
-      <section id="sales-audit" class="page-section">
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">Sales History & Audit</h1>
-            <p class="page-description">Select multiple invoices to calculate dynamic totals.</p>
-          </div>
-        </div>
-
-        <div class="grid grid-3">
-          <div class="card stat-card">
-            <div class="stat-icon">I</div>
-            <div>
-              <div class="stat-value">0</div>
-              <div class="stat-label">Invoices</div>
-            </div>
-          </div>
-          <div class="card stat-card">
-            <div class="stat-icon">U</div>
-            <div>
-              <div class="stat-value">0</div>
-              <div class="stat-label">Units Sold</div>
-            </div>
-          </div>
-          <div class="card stat-card">
-            <div class="stat-icon">R</div>
-            <div>
-              <div class="stat-value">₹0.00</div>
-              <div class="stat-label">Revenue</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card" style="margin-bottom: 1.5rem; background: #f1f5f9;">
-          <h4 style="font-size:0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Selected Invoices Summary (0)</h4>
-          <div style="display:flex; gap:1.5rem; flex-wrap:wrap; font-size:0.95rem;">
-            <div><strong>Units:</strong> <span>0</span></div>
-            <div><strong>Revenue:</strong> <span>₹0.00</span></div>
-            <div><strong>Net Profit:</strong> <span>₹0.00</span></div>
-          </div>
-        </div>
-
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th><input type="checkbox" /></th>
-                <th>Invoice #</th>
-                <th>Date</th>
-                <th>Items</th>
-                <th>Revenue</th>
-                <th>Profit</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td colspan="6" style="text-align:center; color: var(--text-muted); padding: 2rem;">
-                  No sales invoices recorded yet.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-    </main>
-  </div>
-
-
-  <!-- INVOICE PREVIEW MODAL -->
-  <div class="modal-backdrop" id="invoiceModal">
-    <div class="invoice-dialog">
-      <div style="display:flex; justify-content:space-between; border-bottom: 1px solid var(--border-color); padding-bottom:0.75rem; margin-bottom:1rem;">
-        <div>
-          <h2 style="font-size: 1.1rem; font-weight:700;">Tanahun Shrestha Suppliers and Kirana Stores</h2>
-          <p style="font-size:0.8rem; color: var(--text-muted);">PAN No. 624523318</p>
-        </div>
-        <div style="text-align:right;">
-          <span style="font-weight:bold; color: var(--primary);">INV-0001</span>
-        </div>
-      </div>
-
-      <div class="table-wrapper" style="margin-bottom:1rem;">
-        <table>
-          <thead>
-            <tr><th>Product</th><th>Qty</th><th>Rate</th><th>Total</th></tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No items in cart</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom: 1rem;">
-        <span>Total</span>
-        <span>₹0.00</span>
-      </div>
-
-      <div style="font-size:0.75rem; text-align:center; color:var(--text-muted); margin-bottom:1.25rem;">
-        Bill by TSS&KS — Thank you for your business!
-      </div>
-
-      <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
-        <button class="btn btn-outline" id="closeInvoiceBtn">Close</button>
-        <button class="btn btn-primary" onclick="window.print()">Print Invoice</button>
       </div>
     </div>
+
   </div>
 
-
-  <!-- JS TAB NAVIGATION & INTERACTION CONTROLLER -->
   <script>
-    // Tab Switcher Logic
-    const navItems = document.querySelectorAll('.nav-item');
-    const sections = document.querySelectorAll('.page-section');
+    const slideTrack = document.getElementById('slideTrack');
+    const slideLinks = document.querySelectorAll('.slide-link');
     const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    const toggleBtn = document.getElementById('sidebarToggle');
+    const overlay = document.getElementById('overlay');
+    const menuBtn = document.getElementById('menuBtn');
 
-    navItems.forEach(item => {
-      item.addEventListener('click', () => {
-        const target = item.getAttribute('data-target');
+    // Horizontal Slide Navigation Logic
+    function goToSlide(index) {
+      slideTrack.style.transform = `translateX(-${index * 100}%)`;
 
-        navItems.forEach(nav => nav.classList.remove('active'));
-        sections.forEach(sec => sec.classList.remove('active'));
-
-        item.classList.add('active');
-        document.getElementById(target).classList.add('active');
-
-        if (window.innerWidth <= 768) {
-          closeMobileSidebar();
+      slideLinks.forEach((link, idx) => {
+        if (idx === index) {
+          link.classList.add('active');
+        } else {
+          link.classList.remove('active');
         }
       });
-    });
 
-    // Mobile Sidebar Drawer Logic
-    function openMobileSidebar() {
+      if (window.innerWidth <= 768) {
+        closeSidebar();
+      }
+    }
+
+    // Mobile Sidebar Drawer Controller
+    function openSidebar() {
       sidebar.classList.add('active');
       overlay.classList.add('active');
     }
 
-    function closeMobileSidebar() {
+    function closeSidebar() {
       sidebar.classList.remove('active');
       overlay.classList.remove('active');
     }
 
-    toggleBtn.addEventListener('click', openMobileSidebar);
-    overlay.addEventListener('click', closeMobileSidebar);
-
-    // Invoice Modal Triggering
-    const invoiceModal = document.getElementById('invoiceModal');
-    const openInvoiceBtn = document.getElementById('openInvoiceBtn');
-    const closeInvoiceBtn = document.getElementById('closeInvoiceBtn');
-
-    openInvoiceBtn.addEventListener('click', () => invoiceModal.classList.add('active'));
-    closeInvoiceBtn.addEventListener('click', () => invoiceModal.classList.remove('active'));
+    menuBtn.addEventListener('click', openSidebar);
+    overlay.addEventListener('click', closeSidebar);
   </script>
 </body>
 </html>

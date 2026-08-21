@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#182233" />
 <link rel="icon" href="icon-192.png" />
 <link rel="apple-touch-icon" href="icon-192.png" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
   html, body { background: #F5F6F8; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; touch-action: pan-y; }
@@ -265,8 +266,14 @@
 
     <!-- NEW SALE VIEW -->
     <div id="view-sale" class="tab-view">
-      <div class="page-title">New Sale</div>
-      <div class="page-sub">Select products to add to cart and issue bills.</div>
+      <div class="flex-between" style="margin-bottom:2px; flex-wrap:wrap; gap:8px;">
+        <div>
+          <div class="page-title">New Sale</div>
+          <div class="page-sub" style="margin-bottom:0;">Select products to add to cart and issue bills.</div>
+        </div>
+        <button class="btn btn-outline" onclick="openManualInvoiceModal()">+ Manual invoice</button>
+      </div>
+      <div style="height:16px;"></div>
       <div style="display:grid; grid-template-columns: 1fr; gap:16px;">
         <div>
           <input type="text" id="sale-search" class="input" placeholder="Search products..." oninput="renderSaleProducts()" />
@@ -275,6 +282,8 @@
         <div>
           <div class="card" style="position:sticky; top:16px;">
             <h3 style="font-size:14px; margin-bottom:10px;">Cart</h3>
+            <label style="font-size:11px; color:#64748b;">Invoice No.</label>
+            <input type="text" id="cart-inv-no" class="input" placeholder="e.g. INV-0001" />
             <input type="text" id="cust-name" class="input" placeholder="Customer name (optional)" />
             <button id="btn-more-cust" onclick="toggleCustDetails()" style="background:none; border:none; color:#10b981; font-size:12px; font-weight:600; cursor:pointer; margin-bottom:10px;">+ Add address, contact, PAN</button>
             <div id="cust-extra-fields" style="display:none;">
@@ -323,9 +332,15 @@
 
     <!-- SALES HISTORY VIEW -->
     <div id="view-history" class="tab-view">
-      <div class="page-title">Sales History & Audit</div>
-      <div class="page-sub">Select multiple invoices to calculate dynamic totals.</div>
-      
+      <div class="flex-between" style="flex-wrap:wrap; gap:8px;">
+        <div>
+          <div class="page-title">Sales History & Audit</div>
+          <div class="page-sub" style="margin-bottom:12px;">Select multiple invoices to calculate dynamic totals.</div>
+        </div>
+        <button class="btn btn-outline" onclick="exportHistoryToExcel()">⬇ Export to Excel</button>
+      </div>
+      <input type="text" id="hist-search" class="input" placeholder="Search by invoice no. or customer name" oninput="renderHistoryListOnly()" style="max-width:360px;" />
+
       <div class="grid-stats" style="grid-template-columns: repeat(3, 1fr);">
         <div class="stat-card">
           <div class="stat-lbl">Invoices</div>
@@ -418,6 +433,13 @@ const todayStr = () => {
 };
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+// Suggests the next invoice number, but this is only ever a starting
+// suggestion — both the cart and the manual invoice modal let it be
+// typed over before the sale is completed.
+function nextInvoiceNo() {
+  return `INV-${String(invoices.length + 1).padStart(4, '0')}`;
+}
 
 // FIX: escape any user-supplied string before inserting into innerHTML (prevents XSS
 // via product names, SKUs, customer names/address/contact/PAN, etc.)
@@ -527,32 +549,6 @@ function setTab(tab) {
   render();
 }
 
-/* Touch Gesture Setup */
-let touchStartX = 0, touchStartY = 0, touchEndX = 0, touchEndY = 0;
-document.addEventListener('touchstart', e => {
-  touchStartX = e.changedTouches[0].screenX;
-  touchStartY = e.changedTouches[0].screenY;
-}, { passive: true });
-
-document.addEventListener('touchend', e => {
-  touchEndX = e.changedTouches[0].screenX;
-  touchEndY = e.changedTouches[0].screenY;
-  const modal = document.getElementById('modal-container');
-  if (modal && modal.style.display !== 'none') return;
-
-  const diffX = touchEndX - touchStartX;
-  const diffY = touchEndY - touchStartY;
-
-  if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 45) {
-    const activeTab = navTabs.find(t => document.getElementById('view-' + t)?.classList.contains('active-view'));
-    if (!activeTab) return;
-    const currentIndex = navTabs.indexOf(activeTab);
-
-    if (diffX < 0 && currentIndex < navTabs.length - 1) setTab(navTabs[currentIndex + 1]);
-    else if (diffX > 0 && currentIndex > 0) setTab(navTabs[currentIndex - 1]);
-  }
-}, { passive: true });
-
 function render() {
   const lowStock = inventory.filter(i => Number(i.qty) <= Number(i.lowStockAt ?? 5));
   const totalUnits = inventory.reduce((s,i) => s + Number(i.qty), 0);
@@ -600,6 +596,7 @@ function render() {
   renderInventory();
   renderStockHistory();
   renderSaleProducts();
+  renderCart();
   renderHistory();
 }
 
@@ -813,6 +810,9 @@ function setCartQtyDirect(id, newQtyVal) {
 }
 
 function renderCart() {
+  const invNoField = document.getElementById('cart-inv-no');
+  if(invNoField && !invNoField.value) invNoField.value = nextInvoiceNo();
+
   const container = document.getElementById('cart-items-container');
   let total = 0;
   if(cart.length === 0) {
@@ -870,7 +870,16 @@ function completeSale() {
     }
   }
 
-  const invoiceNo = `INV-${String(invoices.length + 1).padStart(4, '0')}`;
+  // Invoice number: use whatever's typed in the field (trimmed); fall back
+  // to the auto-suggested one if left blank. Warn on a duplicate rather than
+  // silently overwriting an earlier invoice.
+  const invNoField = document.getElementById('cart-inv-no');
+  const invoiceNo = (invNoField.value || '').trim() || nextInvoiceNo();
+  if(invoices.some(v => v.invoiceNo === invoiceNo)) {
+    alert(`Invoice number "${invoiceNo}" is already in use. Please choose a different one.`);
+    return;
+  }
+
   const total = cart.reduce((s,c) => s + (c.price * c.qty), 0);
   const profit = cart.reduce((s,c) => s + ((c.price - (c.costPrice||0)) * c.qty), 0);
 
@@ -897,12 +906,136 @@ function completeSale() {
   saveData();
 
   cart = [];
+  document.getElementById('cart-inv-no').value = '';
   document.getElementById('cust-name').value = '';
   document.getElementById('cust-addr').value = '';
   document.getElementById('cust-phone').value = '';
   document.getElementById('cust-pan').value = '';
   renderCart();
 
+  showReceipt(invoice);
+}
+
+/* Manual Invoice Entry — lets the shop owner key in a bill directly
+   (e.g. a backdated sale, or items not tracked in inventory) without
+   going through the product-picker cart. Does not touch stock levels. */
+let manualInvoiceDraft = null;
+
+function openManualInvoiceModal() {
+  manualInvoiceDraft = {
+    invoiceNo: nextInvoiceNo(),
+    date: todayStr(),
+    customer: '', address: '', contact: '', pan: '',
+    lines: [{ name: '', qty: 1, price: 0 }]
+  };
+  document.getElementById('modal-title').innerText = 'Manual invoice';
+  renderManualInvoiceModal();
+  document.getElementById('modal-container').style.display = 'flex';
+}
+
+function renderManualInvoiceModal() {
+  const d = manualInvoiceDraft;
+  if(!d) return;
+  const total = d.lines.reduce((s, l) => s + (Number(l.qty)||0) * (Number(l.price)||0), 0);
+
+  document.getElementById('modal-body').innerHTML = `
+    <label style="font-size:11px; color:#64748b;">Invoice No.</label>
+    <input type="text" id="mi-inv-no" class="input" placeholder="e.g. INV-0001" value="${escapeHtml(d.invoiceNo)}" onchange="setManualDraftField('invoiceNo', this.value)" />
+    <label style="font-size:11px; color:#64748b;">Invoice date</label>
+    <input type="date" id="mi-date" class="input" value="${escapeHtml(d.date)}" onchange="setManualDraftField('date', this.value)" />
+    <input type="text" id="mi-cust" class="input" placeholder="Customer name (optional)" value="${escapeHtml(d.customer)}" onchange="setManualDraftField('customer', this.value)" />
+    <input type="text" id="mi-addr" class="input" placeholder="Address (optional)" value="${escapeHtml(d.address)}" onchange="setManualDraftField('address', this.value)" />
+    <input type="text" id="mi-phone" class="input" placeholder="Contact number (optional)" value="${escapeHtml(d.contact)}" onchange="setManualDraftField('contact', this.value)" />
+    <input type="text" id="mi-pan" class="input" placeholder="PAN number (optional)" value="${escapeHtml(d.pan)}" onchange="setManualDraftField('pan', this.value)" />
+
+    <div style="font-size:11px; color:#64748b; margin:6px 0 4px;">Items</div>
+    <div id="mi-lines">
+      ${d.lines.map((l, idx) => `
+        <div style="display:grid; grid-template-columns:1fr 50px 70px 22px; gap:6px; align-items:center; margin-bottom:8px;">
+          <input type="text" class="input" style="margin-bottom:0;" placeholder="Item name" value="${escapeHtml(l.name)}" oninput="setManualLineField(${idx}, 'name', this.value)" />
+          <input type="number" class="input" style="margin-bottom:0;" min="0" step="1" placeholder="Qty" value="${l.qty}" onchange="setManualLineField(${idx}, 'qty', this.value, true)" />
+          <input type="number" class="input" style="margin-bottom:0;" min="0" step="0.01" placeholder="Price" value="${l.price}" onchange="setManualLineField(${idx}, 'price', this.value, true)" />
+          <button onclick="removeManualInvoiceLine(${idx})" style="border:none; background:none; cursor:pointer; color:#ef4444; font-size:16px;" title="Remove line">✕</button>
+        </div>
+      `).join('')}
+    </div>
+    <button class="btn-outline btn" style="width:100%; margin-bottom:12px;" onclick="addManualInvoiceLine()">+ Add line</button>
+
+    <div class="flex-between" style="font-weight:600; font-size:14px; border-top:1px solid #e2e8f0; padding-top:10px; margin-bottom:12px;">
+      <span>Total</span>
+      <span>${money(total)}</span>
+    </div>
+    <div class="error-text" id="mi-error"></div>
+    <button class="btn" style="width:100%;" onclick="saveManualInvoice()">Save & view invoice</button>
+  `;
+
+  // Re-focus is tricky after a full re-render on every keystroke of qty/price;
+  // name fields use oninput without re-render so typing in them stays smooth.
+}
+
+function setManualDraftField(field, value) {
+  if(manualInvoiceDraft) manualInvoiceDraft[field] = value;
+}
+
+function setManualLineField(idx, field, value, rerender) {
+  if(!manualInvoiceDraft) return;
+  manualInvoiceDraft.lines[idx][field] = value;
+  if(rerender) renderManualInvoiceModal();
+}
+
+function addManualInvoiceLine() {
+  manualInvoiceDraft.lines.push({ name: '', qty: 1, price: 0 });
+  renderManualInvoiceModal();
+}
+
+function removeManualInvoiceLine(idx) {
+  manualInvoiceDraft.lines.splice(idx, 1);
+  if(manualInvoiceDraft.lines.length === 0) manualInvoiceDraft.lines.push({ name: '', qty: 1, price: 0 });
+  renderManualInvoiceModal();
+}
+
+function saveManualInvoice() {
+  const d = manualInvoiceDraft;
+  const errEl = document.getElementById('mi-error');
+  const showErr = msg => { if(errEl) { errEl.innerText = msg; errEl.style.display = 'block'; } };
+
+  const invoiceNo = (d.invoiceNo || '').trim() || nextInvoiceNo();
+  if(invoices.some(v => v.invoiceNo === invoiceNo)) return showErr(`Invoice number "${invoiceNo}" is already in use. Please choose a different one.`);
+  if(!d.date) return showErr('Invoice date is required.');
+
+  const cleanLines = d.lines
+    .map(l => ({ name: (l.name||'').trim(), qty: Number(l.qty), price: Number(l.price) }))
+    .filter(l => l.name);
+
+  if(cleanLines.length === 0) return showErr('Add at least one item with a name.');
+  for(const l of cleanLines) {
+    if(isNaN(l.qty) || l.qty <= 0 || !Number.isInteger(l.qty)) return showErr(`Quantity for "${l.name}" must be a whole number greater than 0.`);
+    if(isNaN(l.price) || l.price < 0) return showErr(`Price for "${l.name}" must be a valid non-negative number.`);
+  }
+  if(errEl) errEl.style.display = 'none';
+
+  const items = cleanLines.map(l => ({ id: uid(), name: l.name, price: l.price, costPrice: 0, qty: l.qty }));
+  const total = items.reduce((s, i) => s + i.price * i.qty, 0);
+
+  const invoice = {
+    id: uid(),
+    invoiceNo,
+    customer: d.customer.trim(),
+    customerAddress: d.address.trim(),
+    customerContact: d.contact.trim(),
+    customerPan: d.pan.trim(),
+    date: d.date,
+    time: new Date().toLocaleTimeString(),
+    items,
+    total,
+    profit: 0,
+    manual: true
+  };
+
+  invoices.unshift(invoice);
+  saveData();
+  closeModal();
+  manualInvoiceDraft = null;
   showReceipt(invoice);
 }
 
@@ -979,6 +1112,15 @@ function renderHistory() {
   renderHistoryListOnly();
 }
 
+function getFilteredInvoices() {
+  const query = (document.getElementById('hist-search')?.value || '').trim().toLowerCase();
+  if(!query) return invoices;
+  return invoices.filter(v =>
+    (v.invoiceNo || '').toLowerCase().includes(query) ||
+    (v.customer || '').toLowerCase().includes(query)
+  );
+}
+
 function renderHistoryListOnly() {
   const container = document.getElementById('history-container');
   if(invoices.length === 0) {
@@ -986,7 +1128,13 @@ function renderHistoryListOnly() {
     return;
   }
 
-  container.innerHTML = invoices.map(v => {
+  const filtered = getFilteredInvoices();
+  if(filtered.length === 0) {
+    container.innerHTML = '<div style="text-align:center; font-size:12px; color:#94a3b8; padding:20px;">No invoices match your search.</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(v => {
     const isChecked = selectedInvoiceIds.has(v.id);
     return `
       <div class="flex-between" style="padding:12px; border-bottom:1px solid #f1f5f9; background:${isChecked ? '#f0fdf4' : '#fff'}; cursor:pointer;" onclick="showReceiptDetails('${v.id}')">
@@ -1006,6 +1154,51 @@ function renderHistoryListOnly() {
 function showReceiptDetails(id) {
   const inv = invoices.find(v => v.id === id);
   if(inv) showReceipt(inv);
+}
+
+// Exports the currently searched/filtered invoices (or, if some are checked,
+// just the selected ones) to a real .xlsx workbook using SheetJS.
+function exportHistoryToExcel() {
+  if(!window.XLSX) {
+    alert('Excel export library failed to load. Check your internet connection and try again.');
+    return;
+  }
+
+  const base = getFilteredInvoices();
+  const source = selectedInvoiceIds.size > 0
+    ? base.filter(v => selectedInvoiceIds.has(v.id))
+    : base;
+
+  if(source.length === 0) {
+    alert('No invoices to export.');
+    return;
+  }
+
+  const rows = source.map(v => ({
+    'Invoice No': v.invoiceNo,
+    'Date': v.date,
+    'Time': v.time,
+    'Customer': v.customer || 'Walk-in customer',
+    'Address': v.customerAddress || '',
+    'Contact': v.customerContact || '',
+    'PAN': v.customerPan || '',
+    'Items': v.items.map(it => `${it.name} x${it.qty}`).join(', '),
+    'Units': v.items.reduce((s, it) => s + it.qty, 0),
+    'Total (Rs.)': v.total,
+    'Profit (Rs.)': v.profit || 0,
+    'Manual Entry': v.manual ? 'Yes' : ''
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [
+    { wch: 12 }, { wch: 11 }, { wch: 10 }, { wch: 20 }, { wch: 22 },
+    { wch: 14 }, { wch: 14 }, { wch: 40 }, { wch: 8 }, { wch: 12 }, { wch: 12 }, { wch: 12 }
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Sales History');
+
+  const stamp = todayStr();
+  XLSX.writeFile(wb, `sales-history-${stamp}.xlsx`);
 }
 
 function openModal(id) {
@@ -1095,7 +1288,9 @@ Object.assign(window, {
   openProductModal, saveProductModal, editProduct, deleteProduct,
   renderInventory, renderSaleProducts,
   addToCart, updateCartQty, setCartQtyDirect, toggleCustDetails, completeSale,
-  toggleSelectInvoice, toggleSelectAllInvoices, clearSelectedInvoices, showReceiptDetails
+  toggleSelectInvoice, toggleSelectAllInvoices, clearSelectedInvoices, showReceiptDetails,
+  openManualInvoiceModal, addManualInvoiceLine, removeManualInvoiceLine, saveManualInvoice,
+  setManualDraftField, setManualLineField, exportHistoryToExcel
 });
 
 initData();
